@@ -213,8 +213,6 @@ This project is a **lightweight, reliable, and extensible ESP32 audio greeting s
 
 ---
 
-## Contributors
-
 ## 👥 Contributors ✨
 
 <table>
