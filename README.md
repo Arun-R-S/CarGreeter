@@ -1,6 +1,6 @@
 # ESP32 Car Greeter 🚗🔊
 
-A **WiFi-enabled, event-driven audio greeting system in car** built on ESP32, designed for reliability, simplicity, and scalability.
+A **WiFi-enabled, event-driven audio greeting system in car** built on ESP32, that plays a personalized welcome message on car startup, configurable via 🌐 web UI with ⏱ delay control and 📤 audio upload.
 
 ---
 
