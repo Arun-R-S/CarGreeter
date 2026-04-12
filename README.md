@@ -213,4 +213,26 @@ This project is a **lightweight, reliable, and extensible ESP32 audio greeting s
 
 ---
 
+## 👥 Contributors ✨
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/Arun-R-S">
+        <img src="https://github.com/Arun-R-S.png" width="100" style="border-radius:50%; display:block;" alt="ArunRS"/><br />
+        <b>@Arun-R-S</b>
+      </a><br />
+      💼 Owner & Developer
+    </td>
+    <td align="center">
+      <a href="https://github.com/EchoWaveSystems">
+        <img src="https://github.com/EchoWaveSystems.png" width="100" style="border-radius:50%; display:block;" alt="EchoWaveSystems"/><br />
+        <b>@EchoWaveSystems</b>
+      </a><br />
+      💻 Developer & Reviewer
+    </td>
+  </tr>
+</table>
+
+---
 END OF FILE
