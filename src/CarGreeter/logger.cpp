@@ -23,6 +23,8 @@ bool g_recentWrapped = false;
 
 const char* levelToString(LogLevel level) {
   switch (level) {
+    case LOG_DEBUG:
+      return "DEBUG";
     case LOG_INFO:
       return "INFO";
     case LOG_WARN:
@@ -90,6 +92,7 @@ void loggerStartTask(UBaseType_t priority, uint32_t stackWords) {
 void logInfo(const char* tag, const char* message) { enqueue(LOG_INFO, tag, message); }
 void logWarn(const char* tag, const char* message) { enqueue(LOG_WARN, tag, message); }
 void logError(const char* tag, const char* message) { enqueue(LOG_ERROR, tag, message); }
+void logDebug(const char* tag, const char* message) { enqueue(LOG_DEBUG, tag, message); }
 
 void loggerCopyRecent(char* out, size_t outSize) {
   if (out == nullptr || outSize == 0) {
