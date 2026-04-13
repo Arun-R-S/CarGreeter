@@ -27,7 +27,16 @@ static const char kIndexHtml[] PROGMEM = R"rawliteral(
     textarea{min-height:120px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px}
     .two{display:grid;gap:10px}
     @media(min-width:520px){.two{grid-template-columns:1fr 1fr}}
-    button{background:linear-gradient(180deg,#6ea8ff,#4b82ff);border:0;color:#04102b;border-radius:12px;padding:10px 12px;font-size:15px;font-weight:700;cursor:pointer}
+    button{
+      background: linear-gradient(180deg, #6ea8ff, #0133a7);
+      border:0;
+      color: #04102b;
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:15px;
+      font-weight:700;
+      cursor:pointer
+    }
     .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid rgba(255,255,255,.12);border-radius:999px;font-size:13px;color:var(--muted)}
     .list{margin-top:10px;display:grid;gap:8px}
     .net{display:flex;justify-content:space-between;gap:10px;border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:10px 12px;background:rgba(11,16,32,.55)}
@@ -37,23 +46,23 @@ static const char kIndexHtml[] PROGMEM = R"rawliteral(
       border:1px solid rgba(255, 255, 255, .14)
     }
     button.danger{
-      background:linear-gradient(180deg, #ff6b6b, #ff4d4d);
+      background: linear-gradient(180deg, #f97f60, #b00000);
       color: #2b0505
     }
     button.success {
-    background: linear-gradient(180deg, #6bffab, #4dffa0);
+    background: linear-gradient(180deg, #40f58e, #019043);
     color: #000000;
     }
     button.primary {
-    background: linear-gradient(180deg, #22719f, #0b508d);
+    background: linear-gradient(180deg, #dbf2ff, #0b508d);
     color: #000000;
     }
     button.warning {
-    background: linear-gradient(180deg, #ffcc00, #ff9900);
+    background: linear-gradient(180deg, #edd368, #ad6801);
     color: #000000;
     }
     button.info {
-    background: linear-gradient(180deg, #66ccff, #3399ff);
+    background: linear-gradient(180deg, #78c0e4, #044282);
     color: #000000;
     }
     button:hover {
@@ -113,7 +122,7 @@ static const char kIndexHtml[] PROGMEM = R"rawliteral(
       </section>
 
       <section class="card">
-        <div class="title"><h2>Boot Delay</h2><span class="muted">seconds</span></div>
+        <div class="title"><h2>Welcome Sound Delay</h2><span class="muted">seconds</span></div>
         <div class="two">
           <div>
             <label>Delay</label>
