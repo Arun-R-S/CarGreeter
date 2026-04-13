@@ -1,6 +1,9 @@
 #include <Arduino.h>
 #include <WiFi.h>
 
+#include <esp_err.h>
+#include <nvs_flash.h>
+
 #include "auth_manager.h"
 #include "config_manager.h"
 #include "event_bus.h"
@@ -17,6 +20,31 @@ constexpr const char* kWifiPassword = "YOUR_WIFI_PASSWORD";
 constexpr const char* kApSsid = "CarGreeter";
 // Minimum 8 chars for WPA2. Change this.
 constexpr const char* kApPassword = "car12345";
+
+bool initNvs() {
+  esp_err_t err = nvs_flash_init();
+  if (err == ESP_OK) {
+    logInfo("NVS", "Initialized");
+    return true;
+  }
+
+  if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+    logWarn("NVS", "Init requires erase");
+    const esp_err_t eraseErr = nvs_flash_erase();
+    if (eraseErr != ESP_OK) {
+      logError("NVS", esp_err_to_name(eraseErr));
+      return false;
+    }
+    err = nvs_flash_init();
+    if (err == ESP_OK) {
+      logInfo("NVS", "Initialized after erase");
+      return true;
+    }
+  }
+
+  logError("NVS", esp_err_to_name(err));
+  return false;
+}
 
 bool connectWifiSta() {
   logInfo("WIFI", "Connecting...");
@@ -72,7 +100,9 @@ void setup() {
   eventBusStartTask();
 
   schedulerInit();
+  (void)initNvs();
   configManagerInit();
+  configManagerStartTask();
   authManagerInit("admin", "1234");
 
   const bool networkOk = ensureNetwork();
@@ -81,8 +111,10 @@ void setup() {
       // IMPORTANT:
       // - Avoid UART1 defaults (GPIO9/10 are SPI flash pins on many ESP32 variants).
       // - Avoid GPIO16/17 on ESP32-WROVER/ESP32-CAM builds that use PSRAM (these pins are commonly wired to PSRAM).
+      // - On many ESP32-CAM (AI Thinker style) boards, GPIO4 drives the bright flash LED.
+      //   Using it for UART TX will keep the LED on; prefer an SD pin (GPIO13/14) if SD is unused.
       // - TX-only wiring is enough for basic playback control: ESP32 TX -> JQ6500 RX; leave JQ6500 TX unconnected.
-      .txPin = 4,
+      .txPin = 13,
       .rxPin = -1,
       .baudRate = 9600,
       .welcomeTrackIndex = 1,

@@ -38,8 +38,12 @@ void schedulerTask(void*) {
 
   const int32_t delaySeconds = g_delaySeconds;
   if (delaySeconds > 0) {
-    logInfo("SCHED", "Boot delay started");
+    char msg[64];
+    snprintf(msg, sizeof(msg), "Boot delay running: %ld s", static_cast<long>(delaySeconds));
+    logInfo("SCHED", msg);
     vTaskDelay(pdMS_TO_TICKS(static_cast<uint32_t>(delaySeconds) * 1000u));
+  } else {
+    logInfo("SCHED", "Boot delay skipped (0 s)");
   }
   (void)eventBusSend(EVENT_PLAY, 0);
   logInfo("SCHED", "Boot playback event sent");
