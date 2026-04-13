@@ -40,6 +40,10 @@ HTTP 401 Unauthorized
 | GET    | `/play`     | Trigger audio playback |
 | GET    | `/setDelay` | Set playback delay     |
 | GET    | `/logs`     | Fetch logs             |
+| GET    | `/settings` | Read current settings  |
+| GET    | `/backup`   | Download settings      |
+| POST   | `/restore`  | Restore settings       |
+| POST   | `/reset`    | Factory reset settings |
 
 ---
 
@@ -227,6 +231,57 @@ sendEvent(EVENT_PLAY)
    ↓
 Return 200 OK
 ```
+
+---
+
+# 🧾 Settings Management (Planned)
+
+This section documents the intended high-level API for the Tasmota-style settings system described in `docs/09-storage.md`.
+
+All endpoints MUST require Basic Authentication.
+
+## GET `/settings`
+
+Returns current effective settings (JSON).
+
+Example fields:
+
+```json
+{"delaySeconds":5}
+```
+
+---
+
+## GET `/backup`
+
+Downloads a settings backup (JSON).
+
+Notes:
+
+* Prefer excluding secrets by default.
+* Keep payload small.
+
+---
+
+## POST `/restore`
+
+Restores settings from a JSON payload.
+
+Behavior:
+
+* Validate schema + bounds.
+* Persist and then reboot (or live-apply via events).
+
+---
+
+## POST `/reset`
+
+Factory reset settings.
+
+Rules:
+
+* Require explicit confirmation parameter (example: `confirm=YES`).
+* Handler emits a reset event; the Settings module performs the reset and triggers reboot.
 
 ---
 

@@ -150,6 +150,7 @@ The system uses multiple tasks to ensure **non-blocking execution**.
 | JQ6500 Task     | Audio control (UART) |
 | Logger Task     | Process logs         |
 | Scheduler Task  | Handle delay logic   |
+| Settings Task   | Deferred settings I/O |
 
 ---
 

@@ -156,7 +156,7 @@ Event {
 
 ---
 
-# ⚙️ 5. Config Manager Module
+# ⚙️ 5. Config Manager Module (Settings)
 
 ## Responsibility
 
@@ -175,8 +175,18 @@ delay = 5 seconds
 
 ## Key Rules
 
-* Must persist data
-* Must be lightweight
+* Must persist data with integrity checks (version + CRC/checksum)
+* Must be lightweight and non-blocking
+* Must defer writes (save-on-change with debounce/min-interval)
+
+---
+
+## Behavior (High Level)
+
+* Load settings on boot; if missing/invalid, apply defaults
+* Publish effective values to the system via events (example: emit `EVENT_SET_DELAY`)
+* Save only when values actually change
+* Support factory reset + backup/restore flows (via events; no business logic in web handlers)
 
 ---
 
@@ -188,7 +198,8 @@ delay = 5 seconds
 
 ## Dependencies
 
-* Optional local storage (SPIFFS/LittleFS) for persistence
+* Preferred: NVS/Preferences for small settings
+* Optional: local FS (LittleFS/SPIFFS) for larger/human-editable files
 * Logger
 
 ---
