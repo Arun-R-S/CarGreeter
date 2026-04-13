@@ -14,7 +14,11 @@ namespace {
 constexpr const char* kWifiSsid = "YOUR_WIFI_SSID";
 constexpr const char* kWifiPassword = "YOUR_WIFI_PASSWORD";
 
-bool connectWifi() {
+constexpr const char* kApSsid = "CarGreeter";
+// Minimum 8 chars for WPA2. Change this.
+constexpr const char* kApPassword = "car12345";
+
+bool connectWifiSta() {
   logInfo("WIFI", "Connecting...");
   WiFi.mode(WIFI_STA);
   WiFi.begin(kWifiSsid, kWifiPassword);
@@ -33,6 +37,29 @@ bool connectWifi() {
   return false;
 }
 
+bool startHotspotAp() {
+  logWarn("WIFI", "Starting hotspot (AP) mode");
+  WiFi.mode(WIFI_AP);
+  const bool ok = WiFi.softAP(kApSsid, kApPassword);
+  if (!ok) {
+    logError("WIFI", "Failed to start hotspot");
+    return false;
+  }
+  const IPAddress ip = WiFi.softAPIP();
+  char ipBuf[32];
+  snprintf(ipBuf, sizeof(ipBuf), "%u.%u.%u.%u", ip[0], ip[1], ip[2], ip[3]);
+  logInfo("WIFI", "Hotspot started");
+  logInfo("WIFI", ipBuf);
+  return true;
+}
+
+bool ensureNetwork() {
+  if (connectWifiSta()) {
+    return true;
+  }
+  return startHotspotAp();
+}
+
 }
 
 void setup() {
@@ -48,7 +75,7 @@ void setup() {
   configManagerInit();
   authManagerInit("admin", "1234");
 
-  const bool wifiOk = connectWifi();
+  const bool networkOk = ensureNetwork();
 
   const Jq6500Config jqCfg{
       // IMPORTANT:
@@ -65,10 +92,10 @@ void setup() {
   webServerInit();
 
   jq6500PlayerStartTask();
-  if (wifiOk) {
+  if (networkOk) {
     webServerStartTask();
   } else {
-    logWarn("WEB", "WiFi down; web server not started");
+    logError("WEB", "Network down; web server not started");
   }
   schedulerStartTask();
 
