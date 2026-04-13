@@ -14,9 +14,6 @@
 
 namespace {
 
-constexpr const char* kWifiSsid = "YOUR_WIFI_SSID";
-constexpr const char* kWifiPassword = "YOUR_WIFI_PASSWORD";
-
 constexpr const char* kApSsid = "CarGreeter";
 // Minimum 8 chars for WPA2. Change this.
 constexpr const char* kApPassword = "car12345";
@@ -46,10 +43,14 @@ bool initNvs() {
   return false;
 }
 
-bool connectWifiSta() {
+bool connectWifiSta(const char* ssid, const char* password) {
+  if (ssid == nullptr || password == nullptr || ssid[0] == '\0' || password[0] == '\0') {
+    logWarn("WIFI", "Credentials missing; skipping STA");
+    return false;
+  }
   logInfo("WIFI", "Connecting...");
   WiFi.mode(WIFI_STA);
-  WiFi.begin(kWifiSsid, kWifiPassword);
+  WiFi.begin(ssid, password);
 
   const uint32_t start = millis();
   while (WiFi.status() != WL_CONNECTED && (millis() - start) < 15000u) {
@@ -82,9 +83,20 @@ bool startHotspotAp() {
 }
 
 bool ensureNetwork() {
-  if (connectWifiSta()) {
+  if (!configManagerHasWifiCredentials()) {
+    logWarn("WIFI", "No saved WiFi credentials; starting hotspot");
+    return startHotspotAp();
+  }
+
+  char ssid[33];
+  char password[65];
+  configManagerCopyWifiCredentials(ssid, sizeof(ssid), password, sizeof(password));
+
+  if (connectWifiSta(ssid, password)) {
     return true;
   }
+
+  logWarn("WIFI", "STA connect failed; starting hotspot");
   return startHotspotAp();
 }
 
