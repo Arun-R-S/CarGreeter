@@ -9,7 +9,9 @@
 #include "event_bus.h"
 #include "jq6500_player.h"
 #include "logger.h"
+#include "network_manager.h"
 #include "scheduler.h"
+#include "system_manager.h"
 #include "web_server.h"
 
 namespace {
@@ -120,6 +122,10 @@ void setup() {
   (void)initNvs();
   configManagerInit();
   configManagerStartTask();
+  systemManagerInit();
+  systemManagerStartTask();
+  networkManagerInit();
+  networkManagerStartTask();
   authManagerInit("admin", "1234");
 
   const bool networkOk = ensureNetwork();
@@ -134,8 +140,8 @@ void setup() {
       .txPin = 13,
       .rxPin = -1,
       .baudRate = 9600,
-      .welcomeTrackIndex = 1,
-      .volume = 20,
+      .welcomeTrackIndex = configManagerGetEffectiveTrackIndex(),
+      .volume = configManagerGetVolume(),
   };
   jq6500PlayerInit(jqCfg);
   webServerInit();
