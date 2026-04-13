@@ -98,22 +98,23 @@ LogEntry {
 
 ## Implementation
 
-* FreeRTOS Queue
+* FreeRTOS Queue with thread-safe enqueue/dequeue
 
 ---
 
 ## Configuration
 
 ```text id="5knx0l"
-Queue Size: 20–50 entries
+Queue Size: 40 entries
 ```
 
 ---
 
 ## Behavior
 
-* Non-blocking write
-* If full → log is dropped (acceptable)
+* Non-blocking write to queue
+* Logger task continuously drains queue
+* If full → log is dropped (acceptable for non-critical logs)
 
 ---
 
@@ -152,14 +153,16 @@ Store in buffer
 ## Design
 
 * Circular buffer
-* Fixed size (e.g., 20–30 logs)
+* Fixed size: **25 entries**
+* Each entry stores: timestamp, log level, tag (12 chars), message (80 chars)
 
 ---
 
 ## Behavior
 
-* Overwrites oldest logs
-* Fast access
+* Overwrites oldest logs when buffer is full
+* Fast access via `loggerCopyRecent()` function
+* Thread-safe access via queue mechanism
 
 ---
 

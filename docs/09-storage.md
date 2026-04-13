@@ -232,18 +232,42 @@ Safety rules:
 
 Backup/restore is for moving settings between devices or recovery:
 
-### Backup
+### Backup Format (Plain Text)
 
-* Authenticated endpoint returns a JSON document representing settings.
-* Prefer excluding secrets by default (or provide an explicit “include_secrets” flag with extra confirmation).
+The backup is a plain-text file with key=value pairs (one per line):
 
-### Restore
+```
+delaySeconds=5
+volume=30
+preloadedIndex=0
+customIndex=1
+wifiSsid=MyWiFi
+wifiPassword=MyPassword123
+apSsid=CarGreeter-AP
+apPassword=APPassword456
+```
 
-* Authenticated endpoint accepts a JSON payload.
-* Validate schema and bounds (delay range, volume range, etc.).
-* Apply to in-RAM settings, persist, and either:
-  * reboot, or
-  * live-apply and notify modules via events.
+### Backup Download
+
+* Authenticated endpoint returns settings as plain text
+* File is downloaded with name: `car_greeter_backup_YYYY-MM-DD.txt`
+* Includes all configuration including WiFi and hotspot credentials
+
+### Restore Upload
+
+* Authenticated endpoint accepts a plain-text file
+* Parses key=value pairs
+* Validates schema and bounds (delay range, volume range, password requirements)
+* Applies settings to in-RAM configuration
+* Persists to NVS
+* May trigger device restart to apply changes
+
+### Security Considerations
+
+* Backup file includes credentials (WiFi passwords, hotspot password)
+* Store backup files securely
+* Only restore backups from trusted sources
+* Plain-text format allows manual editing before restore
 
 ---
 

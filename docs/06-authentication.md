@@ -60,19 +60,52 @@ if (!server.authenticate("admin", "1234")) {
 
 # 🔒 Protected Routes
 
-All sensitive endpoints MUST be protected.
+All sensitive endpoints MUST be protected with Basic Authentication.
 
 ---
 
 ## List of Protected Routes
 
-| Endpoint    | Description       |
-| ----------- | ----------------- |
-| `/`         | Main UI           |
-| `/play`     | Trigger playback  |
-| `/setDelay` | Configure delay   |
-| `/logs`     | Fetch logs        |
-| `/logview`  | Log viewer UI     |
+### UI Pages
+
+| Endpoint    | Description              |
+| ----------- | ------------------------ |
+| `/`         | Main UI page             |
+| `/logview`  | Log viewer UI page       |
+| `/sysinfo`  | System information page  |
+
+### Control Endpoints
+
+| Endpoint    | Description              |
+| ----------- | ------------------------ |
+| `/play`     | Trigger audio playback   |
+| `/setDelay` | Configure playback delay |
+| `/logs`     | Fetch recent logs        |
+
+### API Configuration
+
+| Endpoint            | Description                    |
+| ------------------- | ------------------------------ |
+| `/api/settings`     | Get current settings           |
+| `/api/sysinfo`      | Get system information         |
+| `/api/backup`       | Download settings backup       |
+| `/api/restore`      | Restore settings from backup   |
+| `/api/wifi/scan`    | Scan available WiFi networks   |
+| `/api/wifi/connect` | Connect to WiFi network        |
+| `/api/wifi/forget`  | Forget WiFi credentials        |
+| `/api/hotspot`      | Configure hotspot (AP)         |
+| `/api/audio`        | Configure audio settings       |
+| `/api/restart`      | Restart device                 |
+| `/api/factory_reset`| Factory reset device           |
+| `/api/time/sync`    | Synchronize device time        |
+
+---
+
+## Authentication Failure Behavior
+
+* **Credentials Missing**: Browser shows Basic Auth login popup
+* **Invalid Credentials**: HTTP 401 Unauthorized
+* **Expired Session**: Credentials are not time-limited; browser caches them
 
 ---
 
