@@ -189,6 +189,7 @@ void onSetDelay(const Event& event, void*) {
   g_settings.delaySeconds = v;
   scheduleSave();
   logInfo("CONF", "Delay updated");
+  logDebug("CONF", "Delay updated to %ld seconds", v);
 }
 
 void configTask(void*) {
