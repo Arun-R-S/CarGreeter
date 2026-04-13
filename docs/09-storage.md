@@ -61,7 +61,9 @@ External flash is not required for welcome audio (stored on JQ6500).
 ## Basic Layout
 
 ```text id="3a0v19"
-/config.txt        ← configuration file (delay, future settings)
+NVS (Preferences)
+  namespace: car_greeter
+  keys: cfgA / cfgB  ← settings slots (A/B)
 ```
 
 ---
@@ -138,7 +140,7 @@ Welcome track available for playback
 ## File
 
 ```text id="j1f6pp"
-/config.txt
+NVS namespace: car_greeter
 ```
 
 ---
@@ -146,7 +148,7 @@ Welcome track available for playback
 ## Example Content
 
 ```text
-5
+settings record (binary, CRC-validated)
 ```
 
 ---

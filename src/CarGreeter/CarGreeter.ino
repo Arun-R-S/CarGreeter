@@ -73,6 +73,7 @@ void setup() {
 
   schedulerInit();
   configManagerInit();
+  configManagerStartTask();
   authManagerInit("admin", "1234");
 
   const bool networkOk = ensureNetwork();
