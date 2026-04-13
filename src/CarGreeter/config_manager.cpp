@@ -241,6 +241,8 @@ void configManagerInit() {
     g_seq = 0;
     g_lastSlotWasA = true;
     logWarn("CONF", "No valid settings; using defaults");
+    // Persist defaults once so subsequent boots have a valid settings record.
+    scheduleSave();
   }
 
   (void)eventBusSend(EVENT_SET_DELAY, g_settings.delaySeconds);
