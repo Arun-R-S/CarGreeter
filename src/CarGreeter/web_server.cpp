@@ -2,6 +2,12 @@
 
 #include <WebServer.h>
 #include <WiFi.h>
+#include <esp_system.h>
+#include <esp_chip_info.h>
+#include <esp_flash.h>
+#include <esp_mac.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 
 #include "auth_manager.h"
 #include "config_manager.h"
@@ -292,6 +298,163 @@ void handleTimeSync() {
   g_server.send(200, "text/plain", "Time synced");
 }
 
+void handleSystemInfo() {
+  if (!authManagerEnsure(g_server)) {
+    return;
+  }
+
+  // === HARDWARE INFO ===
+  esp_chip_info_t chipInfo;
+  esp_chip_info(&chipInfo);
+  
+  const char* chipModel = "Unknown";
+  uint32_t cpuFreq = 80;  // Default fallback
+  switch (chipInfo.model) {
+    case CHIP_ESP32:
+      chipModel = "ESP32 (Xtensa LX6)";
+      cpuFreq = 240;
+      break;
+    case CHIP_ESP32S3:
+      chipModel = "ESP32-S3 (Xtensa LX7)";
+      cpuFreq = 240;
+      break;
+    case CHIP_ESP32C3:
+      chipModel = "ESP32-C3 (RISC-V)";
+      cpuFreq = 160;
+      break;
+    case CHIP_ESP32S2:
+      chipModel = "ESP32-S2 (Xtensa LX7)";
+      cpuFreq = 240;
+      break;
+    default:
+      chipModel = "Unknown";
+      break;
+  }
+
+  // === MEMORY INFO ===
+  const uint32_t heapFree = esp_get_free_heap_size();
+  const uint32_t heapMax = 320 * 1024;
+  const uint32_t heapUsed = heapMax - heapFree;
+  const uint32_t heapPercent = (heapUsed * 100) / heapMax;
+  const uint32_t minHeapFree = esp_get_minimum_free_heap_size();
+
+  // === FLASH INFO ===
+  uint32_t flashSize = 0;
+  esp_flash_get_size(NULL, (uint32_t*)&flashSize);
+  const uint32_t flashSizeKB = flashSize / 1024;
+
+  // === MAC ADDRESS ===
+  uint8_t mac[6];
+  esp_read_mac(mac, ESP_MAC_WIFI_STA);
+  char macStr[18];
+  snprintf(macStr, sizeof(macStr), "%02X:%02X:%02X:%02X:%02X:%02X", 
+           mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+
+  // === UPTIME & TIMESTAMPS ===
+  const uint32_t uptime = millis() / 1000;
+  const uint32_t uptimeDays = uptime / 86400;
+  const uint32_t uptimeHours = (uptime % 86400) / 3600;
+  const uint32_t uptimeMinutes = (uptime % 3600) / 60;
+  const uint32_t uptimeSeconds = uptime % 60;
+
+  // === WIFI INFO ===
+  const bool connected = (WiFi.status() == WL_CONNECTED);
+  const int32_t rssi = connected ? static_cast<int32_t>(WiFi.RSSI()) : 0;
+  const char* wifiMode = (WiFi.getMode() == WIFI_AP) ? "AP" : "STA";
+  
+  const IPAddress ip = (WiFi.getMode() == WIFI_AP) ? WiFi.softAPIP() : WiFi.localIP();
+  char ipStr[16];
+  snprintf(ipStr, sizeof(ipStr), "%u.%u.%u.%u", ip[0], ip[1], ip[2], ip[3]);
+  
+  const IPAddress gateway = WiFi.gatewayIP();
+  char gwStr[16];
+  snprintf(gwStr, sizeof(gwStr), "%u.%u.%u.%u", gateway[0], gateway[1], gateway[2], gateway[3]);
+  
+  const IPAddress subnet = WiFi.subnetMask();
+  char subnetStr[16];
+  snprintf(subnetStr, sizeof(subnetStr), "%u.%u.%u.%u", subnet[0], subnet[1], subnet[2], subnet[3]);
+
+  // === RUNTIME INFO ===
+  uint32_t taskCount = uxTaskGetNumberOfTasks();
+
+  // === BUILD COMPREHENSIVE JSON ===
+  char json[3200];
+  snprintf(json, sizeof(json),
+           "{"
+           "\"hardware\":{"
+           "\"chip\":\"%s\","
+           "\"cores\":%u,"
+           "\"revision\":\"0x%02x_%02x\","
+           "\"cpuFreq\":%u,"
+           "\"features\":\"WiFi%s%s\""
+           "},"
+           "\"memory\":{"
+           "\"heapTotal\":%lu,"
+           "\"heapFree\":%lu,"
+           "\"heapUsed\":%lu,"
+           "\"heapPercent\":%u,"
+           "\"minHeapFree\":%lu,"
+           "\"heapFragmented\":0"
+           "},"
+           "\"flash\":{"
+           "\"size\":%lu,"
+           "\"available\":0"
+           "},"
+           "\"network\":{"
+           "\"wifiMode\":\"%s\","
+           "\"connected\":%s,"
+           "\"rssi\":%ld,"
+           "\"mac\":\"%s\","
+           "\"ip\":\"%s\","
+           "\"gateway\":\"%s\","
+           "\"subnet\":\"%s\","
+           "\"dns1\":\"0.0.0.0\","
+           "\"dns2\":\"0.0.0.0\""
+           "},"
+           "\"system\":{"
+           "\"uptime\":\"P%uDT%02uH%02uM%02uS\","
+           "\"uptimeSeconds\":%lu,"
+           "\"taskCount\":%lu,"
+           "\"bootCount\":0"
+           "}"
+           "}",
+           chipModel,
+           static_cast<unsigned>(chipInfo.cores),
+           static_cast<unsigned>((chipInfo.revision >> 8) & 0xFF),
+           static_cast<unsigned>(chipInfo.revision & 0xFF),
+           cpuFreq,
+           (chipInfo.features & 1) ? ",BLE" : "",
+           (chipInfo.features & 4) ? ",BT" : "",
+           static_cast<unsigned long>(heapMax),
+           static_cast<unsigned long>(heapFree),
+           static_cast<unsigned long>(heapUsed),
+           static_cast<unsigned>(heapPercent),
+           static_cast<unsigned long>(minHeapFree),
+           static_cast<unsigned long>(flashSizeKB),
+           wifiMode,
+           connected ? "true" : "false",
+           static_cast<long>(rssi),
+           macStr,
+           ipStr,
+           gwStr,
+           subnetStr,
+           static_cast<unsigned>(uptimeDays),
+           static_cast<unsigned>(uptimeHours),
+           static_cast<unsigned>(uptimeMinutes),
+           static_cast<unsigned>(uptimeSeconds),
+           static_cast<unsigned long>(uptime),
+           static_cast<unsigned long>(taskCount));
+  
+  g_server.send(200, "application/json", json);
+}
+
+void handleSystemDetailsPage() {
+  if (!authManagerEnsure(g_server)) {
+    return;
+  }
+  g_server.send_P(200, "text/html", kSystemDetailsHtml);
+}
+
 void handleLogs() {
   if (!authManagerEnsure(g_server)) {
     return;
@@ -315,10 +478,12 @@ void webTask(void*) {
 void webServerInit() {
   g_server.on("/", HTTP_GET, handleRoot);
   g_server.on("/logview", HTTP_GET, handleLogView);
+  g_server.on("/sysinfo", HTTP_GET, handleSystemDetailsPage);
   g_server.on("/play", HTTP_GET, handlePlay);
   g_server.on("/setDelay", HTTP_GET, handleSetDelay);
   g_server.on("/logs", HTTP_GET, handleLogs);
   g_server.on("/api/settings", HTTP_GET, handleSettings);
+  g_server.on("/api/sysinfo", HTTP_GET, handleSystemInfo);
   g_server.on("/api/wifi/scan", HTTP_GET, handleWifiScan);
   g_server.on("/api/wifi/connect", HTTP_POST, handleWifiConnect);
   g_server.on("/api/wifi/forget", HTTP_POST, handleWifiForget);

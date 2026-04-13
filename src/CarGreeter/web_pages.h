@@ -74,7 +74,10 @@ static const char kIndexHtml[] PROGMEM = R"rawliteral(
   <header>
     <div class="row" style="justify-content:space-between;align-items:center">
       <h1>CarGreeter</h1>
-      <a href="/logview" style="color:var(--accent);text-decoration:none;font-weight:700">Logs</a>
+      <div style="display:flex;gap:12px">
+        <a href="/sysinfo" style="color:var(--accent);text-decoration:underline;font-weight:700">All System Details </a>
+        <a href="/logview" style="color:var(--accent);text-decoration:underline;font-weight:700"> Logs</a>
+      </div>
     </div>
     <div class="row" style="margin-top:10px;gap:8px">
       <span class="pill" id="netMode">Mode: …</span>
@@ -376,6 +379,239 @@ static const char kLogViewHtml[] PROGMEM = R"rawliteral(
     setInterval(syncTime, 180000);
     syncTime();
     load();
+  </script>
+</body>
+</html>
+)rawliteral";
+
+static const char kSystemDetailsHtml[] PROGMEM = R"rawliteral(
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>System Information</title>
+  <style>
+    :root{--bg:#0b1020;--card:#121a33;--text:#e9ecf5;--muted:#aab3d3;--accent:#6ea8ff}
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:linear-gradient(180deg,#070a14,#0b1020);color:var(--text)}
+    header{padding:18px 16px;border-bottom:1px solid rgba(255,255,255,.06);position:sticky;top:0;background:rgba(11,16,32,.85);backdrop-filter:blur(10px)}
+    h1{margin:0;font-size:20px}
+    h2{margin:8px 0 0 0;font-size:14px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.5px}
+    main{padding:16px;max-width:1200px;margin:0 auto}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    a{color:var(--accent);text-decoration:none;font-weight:700}
+    button{background:linear-gradient(180deg,#6ea8ff,#0133a7);border:0;color:#04102b;border-radius:12px;padding:10px 12px;font-size:15px;font-weight:700;cursor:pointer}
+    button.secondary{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,.14)}
+    button:hover{opacity:0.85}
+    .muted{color:var(--muted);font-size:13px}
+    .section{background:rgba(18,26,51,.92);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px;margin-bottom:12px}
+    .stat-row{display:grid;grid-template-columns:minmax(180px,1fr) 1fr;gap:16px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+    .stat-row:last-child{border-bottom:none}
+    .stat-label{font-size:13px;color:var(--muted);font-weight:500}
+    .stat-value{font-size:14px;color:var(--text);font-family:ui-monospace,monospace;word-break:break-all}
+    .stat-bar{background:rgba(0,0,0,.4);border-radius:6px;height:6px;overflow:hidden;margin-top:4px}
+    .stat-bar-fill{background:linear-gradient(90deg,#6ea8ff,#4b82ff);height:100%;border-radius:6px}
+    .status-good{color:#40f58e}
+    .status-warn{color:#edd368}
+    .status-error{color:#f97f60}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <h1>System Information</h1>
+      <div style="display:flex;gap:12px;align-items:center">
+        <button class="secondary" onclick="refresh()">⟳ Refresh</button>
+        <a href="/">Back</a>
+      </div>
+    </div>
+  </header>
+  <main>
+    <div class="section">
+      <h2>Hardware</h2>
+      <div class="stat-row">
+        <div class="stat-label">Chip Model</div>
+        <div class="stat-value" id="chipModel">-</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label">CPU Cores</div>
+        <div class="stat-value" id="cores">-</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label">CPU Frequency</div>
+        <div class="stat-value" id="cpuFreq">-</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label">Revision</div>
+        <div class="stat-value" id="revision">-</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label">Features</div>
+        <div class="stat-value" id="features">-</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Memory</h2>
+      <div class="stat-row">
+        <div class="stat-label">Total Heap</div>
+        <div class="stat-value" id="heapTotal">-</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label">Free Heap</div>
+        <div class="stat-value status-good" id="heapFree">-</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label">Minimum Free</div>
+        <div class="stat-value" id="minHeapFree">-</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label">Used / Usage</div>
+        <div>
+          <div class="stat-value" id="heapUsed">-</div>
+          <div class="stat-value" id="heapPercent" style="font-size:12px;color:var(--muted)">-</div>
+          <div class="stat-bar">
+            <div class="stat-bar-fill" id="heapBar" style="width:50%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Flash Memory</h2>
+      <div class="stat-row">
+        <div class="stat-label">Size</div>
+        <div class="stat-value" id="flashSize">-</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Network</h2>
+      <div class="stat-row">
+        <div class="stat-label">MAC Address</div>
+        <div class="stat-value" id="macAddr">-</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label">WiFi Mode</div>
+        <div class="stat-value" id="wifiMode">-</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label">Connection</div>
+        <div class="stat-value" id="wifiStatus">-</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label">RSSI / Signal</div>
+        <div>
+          <div class="stat-value" id="rssi">-</div>
+          <div class="stat-value" id="signalQuality" style="font-size:12px;color:var(--muted)">-</div>
+        </div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label">IP Address</div>
+        <div class="stat-value" id="ipAddr">-</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label">Gateway</div>
+        <div class="stat-value" id="gateway">-</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label">Subnet Mask</div>
+        <div class="stat-value" id="subnet">-</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label">DNS 1</div>
+        <div class="stat-value" id="dns1">-</div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label">DNS 2</div>
+        <div class="stat-value" id="dns2">-</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>System</h2>
+      <div class="stat-row">
+        <div class="stat-label">Uptime</div>
+        <div>
+          <div class="stat-value" id="uptimeIso">-</div>
+          <div class="stat-value" style="font-size:12px;color:var(--muted)" id="uptimeSec">-</div>
+        </div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-label">Active Tasks</div>
+        <div class="stat-value" id="taskCount">-</div>
+      </div>
+    </div>
+
+    <div class="muted" style="text-align:center;margin-top:20px;padding:20px">
+      Auto-refresh every 3 seconds | Last updated: <span id="lastUpdate">-</span>
+    </div>
+  </main>
+
+  <script>
+    const toKB = (bytes) => (bytes / 1024).toFixed(1) + ' KB';
+    const toMB = (bytes) => (bytes / 1024 / 1024).toFixed(2) + ' MB';
+    
+    function getSignalQuality(rssi) {
+      if (rssi > -50) return '🟢 Excellent';
+      if (rssi > -60) return '🟢 Very Good';
+      if (rssi > -70) return '🟡 Good';
+      if (rssi > -80) return '🟡 Fair';
+      return '🔴 Poor';
+    }
+    
+    async function refresh() {
+      try {
+        const resp = await fetch('/api/sysinfo');
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const d = await resp.json();
+        
+        // Hardware
+        document.getElementById('chipModel').textContent = d.hardware?.chip || '-';
+        document.getElementById('cores').textContent = (d.hardware?.cores || '-') + ' Cores';
+        document.getElementById('cpuFreq').textContent = (d.hardware?.cpuFreq || '-') + ' MHz';
+        document.getElementById('revision').textContent = d.hardware?.revision || '-';
+        document.getElementById('features').textContent = d.hardware?.features || '-';
+        
+        // Memory
+        document.getElementById('heapTotal').textContent = toKB(d.memory?.heapTotal) || '-';
+        document.getElementById('heapFree').textContent = toKB(d.memory?.heapFree) || '-';
+        document.getElementById('minHeapFree').textContent = toKB(d.memory?.minHeapFree) || '-';
+        document.getElementById('heapUsed').textContent = toKB(d.memory?.heapUsed) || '-';
+        const heapPct = d.memory?.heapPercent || 0;
+        document.getElementById('heapPercent').textContent = heapPct + '% used';
+        document.getElementById('heapBar').style.width = heapPct + '%';
+        
+        // Flash
+        document.getElementById('flashSize').textContent = toMB(d.flash?.size) || '-';
+        
+        // Network
+        document.getElementById('macAddr').textContent = d.network?.mac || '-';
+        document.getElementById('wifiMode').textContent = d.network?.wifiMode || '-';
+        document.getElementById('wifiStatus').textContent = d.network?.connected ? '🟢 Connected' : '🔴 Not Connected';
+        document.getElementById('rssi').textContent = d.network?.rssi + ' dBm' || '-';
+        document.getElementById('signalQuality').textContent = getSignalQuality(d.network?.rssi);
+        document.getElementById('ipAddr').textContent = d.network?.ip || '-';
+        document.getElementById('gateway').textContent = d.network?.gateway || '-';
+        document.getElementById('subnet').textContent = d.network?.subnet || '-';
+        document.getElementById('dns1').textContent = d.network?.dns1 || '-';
+        document.getElementById('dns2').textContent = d.network?.dns2 || '-';
+        
+        // System
+        document.getElementById('uptimeIso').textContent = d.system?.uptime || '-';
+        document.getElementById('uptimeSec').textContent = (d.system?.uptimeSeconds || 0).toLocaleString() + ' seconds';
+        document.getElementById('taskCount').textContent = (d.system?.taskCount || '-') + ' tasks';
+        
+        const now = new Date().toLocaleTimeString();
+        document.getElementById('lastUpdate').textContent = now;
+      } catch(e) {
+        console.error('Error:', e);
+      }
+    }
+    
+    refresh();
+    setInterval(refresh, 3000);
   </script>
 </body>
 </html>
