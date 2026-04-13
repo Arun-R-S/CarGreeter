@@ -67,9 +67,14 @@ bool connectWifiSta(const char* ssid, const char* password) {
 }
 
 bool startHotspotAp() {
+  configManagerEnsureHotspotCredentials(kApSsid, kApPassword);
+  char apSsid[33];
+  char apPassword[65];
+  configManagerCopyHotspotCredentials(apSsid, sizeof(apSsid), apPassword, sizeof(apPassword));
+
   logWarn("WIFI", "Starting hotspot (AP) mode");
   WiFi.mode(WIFI_AP);
-  const bool ok = WiFi.softAP(kApSsid, kApPassword);
+  const bool ok = WiFi.softAP(apSsid, apPassword);
   if (!ok) {
     logError("WIFI", "Failed to start hotspot");
     return false;
