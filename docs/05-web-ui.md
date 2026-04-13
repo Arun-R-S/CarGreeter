@@ -48,7 +48,6 @@ JavaScript → API Calls
 ### Purpose
 
 * Control system
-* Upload audio
 * Configure delay
 * Trigger playback
 
@@ -56,7 +55,6 @@ JavaScript → API Calls
 
 ### Features
 
-* Audio upload form
 * Delay configuration input
 * Play button
 * Navigation to logs page
@@ -97,7 +95,6 @@ JavaScript → API Calls
 | ------------ | ------------- |
 | Play Audio   | GET /play     |
 | Set Delay    | GET /setDelay |
-| Upload Audio | POST /upload  |
 | View Logs    | GET /logs     |
 
 ---
@@ -207,14 +204,14 @@ fetch('/play')
 * Test on mobile browser
 * Test on desktop browser
 * Verify all buttons trigger correct API
-* Verify upload works correctly
+* Verify logs work correctly
 
 ---
 
 # 🚀 Future Enhancements
 
 * Better UI styling
-* Progress bar for uploads
+* Playback status indicator
 * Playback status indicator
 * Config dashboard
 

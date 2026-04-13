@@ -2,7 +2,7 @@
 
 ## 🏗️ System Architecture
 
-This project follows a **modular, event-driven, non-blocking architecture** designed specifically for embedded systems like ESP32.
+This project follows a **modular, event-driven, non-blocking architecture** designed for embedded systems like **ESP32-C3**, with audio playback handled by a **JQ6500** module.
 
 ---
 
@@ -21,8 +21,8 @@ This project follows a **modular, event-driven, non-blocking architecture** desi
           ↓
  ┌─────────┼──────────┬──────────┬──────────┐
  ▼         ▼          ▼          ▼          ▼
-Audio   Config    File       Logger     Scheduler
-Engine  Manager   Manager     Task         Task
+JQ6500  Config    Config     Logger     Scheduler
+Player  Manager   Storage    Task         Task
 ```
 
 ---
@@ -40,15 +40,17 @@ Browser → HTTP Request → Web Server → Auth Check → Event Bus → Module 
 ## 2. Playback Flow
 
 ```text
-Scheduler → EVENT_PLAY → Audio Engine → I2S → DAC → AUX Output
+Scheduler → EVENT_PLAY → JQ6500 Player → UART → JQ6500 → DACL/DACR → AUX Output
 ```
 
 ---
 
-## 3. Upload Flow
+## 3. Audio Update Flow
+
+Audio is stored on the JQ6500 module internal flash.
 
 ```text
-Browser → /upload → Web Server → File Manager → Storage
+PC / Tooling → Program JQ6500 flash → Welcome track available for playback
 ```
 
 ---
@@ -109,9 +111,8 @@ Module → Logger API → Log Queue → Logger Task → Output (Serial + Web)
 
 ### Components:
 
-* Audio Engine
+* JQ6500 Player
 * Config Manager
-* File Manager
 * Scheduler
 
 ### Responsibility:
@@ -127,7 +128,7 @@ Module → Logger API → Log Queue → Logger Task → Output (Serial + Web)
 
 * Logger
 * Storage system
-* Hardware drivers (I2S)
+* Hardware drivers (UART)
 
 ### Responsibility:
 
@@ -146,7 +147,7 @@ The system uses multiple tasks to ensure **non-blocking execution**.
 | Task            | Responsibility       |
 | --------------- | -------------------- |
 | Web Server Task | Handle HTTP requests |
-| Audio Task      | Audio playback       |
+| JQ6500 Task     | Audio control (UART) |
 | Logger Task     | Process logs         |
 | Scheduler Task  | Handle delay logic   |
 
@@ -251,7 +252,7 @@ Request → Auth Check → Allow / Reject
 | Module         | Communicates via   |
 | -------------- | ------------------ |
 | Web Server     | Event Bus          |
-| Audio Engine   | Event Bus          |
+| JQ6500 Player  | Event Bus          |
 | Config Manager | Event Bus          |
 | Scheduler      | Event Bus          |
 | Logger         | Direct API + Queue |

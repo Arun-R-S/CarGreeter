@@ -2,7 +2,7 @@
 
 ## 🌐 API Specification Overview
 
-This document defines all HTTP endpoints exposed by the ESP32 Web Server.
+This document defines all HTTP endpoints exposed by the ESP32-C3 Web Server.
 
 These APIs are used by:
 
@@ -39,7 +39,6 @@ HTTP 401 Unauthorized
 | GET    | `/logview`  | Log viewer UI          |
 | GET    | `/play`     | Trigger audio playback |
 | GET    | `/setDelay` | Set playback delay     |
-| POST   | `/upload`   | Upload audio file      |
 | GET    | `/logs`     | Fetch logs             |
 
 ---
@@ -84,7 +83,7 @@ Triggers audio playback.
 ## Flow
 
 ```text
-Request → Event Bus → EVENT_PLAY → Audio Engine
+Request → Event Bus → EVENT_PLAY → JQ6500 Player
 ```
 
 ---
@@ -139,48 +138,7 @@ Delay updated
 
 ---
 
-# 📤 5. POST `/upload`
-
-## Description
-
-Uploads an audio file.
-
----
-
-## Content-Type
-
-```text
-multipart/form-data
-```
-
----
-
-## Form Field
-
-| Field | Description |
-| ----- | ----------- |
-| file  | Audio file  |
-
----
-
-## Flow
-
-```text
-Upload → File Manager → Save /audio.wav → EVENT_UPLOAD_DONE
-```
-
----
-
-## Response
-
-```text
-200 OK
-Upload successful
-```
-
----
-
-# 📊 6. GET `/logs`
+# 📊 5. GET `/logs`
 
 ## Description
 

@@ -41,8 +41,8 @@ This document outlines potential features and improvements for future versions o
 
 ## 🎧 Advanced Formats
 
-* MP3 support (via decoder libraries)
-* AAC/OGG support (optional)
+* If staying with JQ6500, audio decoding is handled by the module
+* If switching away from JQ6500, add ESP32-side decoding + I2S DAC as needed
 
 ---
 
@@ -75,7 +75,7 @@ This document outlines potential features and improvements for future versions o
 
 ## 📈 Progress Indicators
 
-* Upload progress bar
+* Playback status indicator
 * Playback progress display
 
 ---

@@ -1,8 +1,8 @@
 # AGENT.md
 
-## 🎯 Project: ESP32 Audio Greeting System in Car (Event-Driven IoT System)
+## 🎯 Project: ESP32-C3 + JQ6500 Audio Greeting System in Car (Event-Driven IoT System)
 
-This project is an ESP32-based WiFi-enabled audio playback system with web control, built using a **modular, event-driven, non-blocking architecture**.
+This project uses an **ESP32-C3 (WiFi)** for web control and scheduling, and a **JQ6500 voice/MP3 module** for audio playback. The firmware follows a **modular, event-driven, non-blocking architecture**.
 
 ---
 
@@ -87,7 +87,7 @@ All code MUST follow these principles:
 All actions must flow through the event system:
 
 Example:
-Web Server → EVENT_PLAY → Audio Engine
+Web Server → EVENT_PLAY → JQ6500 Player
 
 ---
 
@@ -111,9 +111,8 @@ Web UI → Web Server → Auth Layer → Event Bus → Modules
 
 Modules:
 
-* Audio Engine
+* JQ6500 Player (UART-controlled audio playback)
 * Config Manager
-* File Manager
 * Scheduler
 * Logger
 
@@ -209,11 +208,8 @@ CarGreeter/
 │   ├── event_bus.cpp
 │   ├── event_bus.h
 │   │
-│   ├── audio_engine.cpp
-│   ├── audio_engine.h
-│   │
-│   ├── file_manager.cpp
-│   ├── file_manager.h
+│   ├── jq6500_player.cpp
+│   ├── jq6500_player.h
 │   │
 │   ├── config_manager.cpp
 │   ├── config_manager.h

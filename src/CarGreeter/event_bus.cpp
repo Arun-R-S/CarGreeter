@@ -9,11 +9,18 @@
 namespace {
 
 constexpr size_t kEventQueueLength = 20;
+constexpr size_t kMaxSubscribersPerEvent = 4;
 
 QueueHandle_t g_eventQueue = nullptr;
 TaskHandle_t g_dispatchTask = nullptr;
-EventHandler g_handlers[EVENT_MAX] = {};
-void* g_handlerContexts[EVENT_MAX] = {};
+
+struct Subscriber {
+  EventHandler handler;
+  void* context;
+};
+
+Subscriber g_subscribers[EVENT_MAX][kMaxSubscribersPerEvent] = {};
+uint8_t g_subscriberCount[EVENT_MAX] = {};
 
 void dispatchTask(void*) {
   Event event{};
@@ -28,12 +35,18 @@ void dispatchTask(void*) {
       continue;
     }
 
-    EventHandler handler = g_handlers[typeIndex];
-    if (handler == nullptr) {
+    const uint8_t count = g_subscriberCount[typeIndex];
+    if (count == 0) {
       logWarn("EVENT", "No handler registered");
       continue;
     }
-    handler(event, g_handlerContexts[typeIndex]);
+    for (uint8_t i = 0; i < count; i++) {
+      const Subscriber& s = g_subscribers[typeIndex][i];
+      if (s.handler == nullptr) {
+        continue;
+      }
+      s.handler(event, s.context);
+    }
   }
 }
 
@@ -66,8 +79,16 @@ bool eventBusRegisterHandler(EventType type, EventHandler handler, void* context
   if (typeIndex >= EVENT_MAX) {
     return false;
   }
-  g_handlers[typeIndex] = handler;
-  g_handlerContexts[typeIndex] = context;
+  if (handler == nullptr) {
+    return false;
+  }
+  uint8_t& count = g_subscriberCount[typeIndex];
+  if (count >= kMaxSubscribersPerEvent) {
+    logWarn("EVENT", "Subscriber list full");
+    return false;
+  }
+  g_subscribers[typeIndex][count] = Subscriber{handler, context};
+  count++;
   return true;
 }
 

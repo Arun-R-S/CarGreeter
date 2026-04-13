@@ -27,13 +27,7 @@ static const char kIndexHtml[] PROGMEM = R"rawliteral(
       <input id="delay" type="number" min="0" value="5"/>
       <button onclick="setDelay()">Set</button>
     </div>
-    <div class="row">
-      <form id="up" method="post" action="/upload" enctype="multipart/form-data">
-        <input type="file" name="file" accept=".wav"/>
-        <button type="submit">Upload WAV</button>
-      </form>
-    </div>
-    <p class="muted">All endpoints require Basic Auth.</p>
+    <p class="muted">Audio is stored on the JQ6500 module. All endpoints require Basic Auth.</p>
   </div>
   <script>
     function setDelay(){
@@ -73,4 +67,3 @@ static const char kLogViewHtml[] PROGMEM = R"rawliteral(
 </body>
 </html>
 )rawliteral";
-
