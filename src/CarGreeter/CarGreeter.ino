@@ -128,14 +128,8 @@ void setup() {
   timeManagerStartTask();
   configManagerInit();
   configManagerStartTask();
-  systemManagerInit();
-  systemManagerStartTask();
-  networkManagerInit();
-  networkManagerStartTask();
-  authManagerInit("admin", "1234");
 
-  const bool networkOk = ensureNetwork();
-
+  // Start audio as early as possible so welcome playback is not delayed by WiFi connect/hotspot setup.
   const Jq6500Config jqCfg{
       // IMPORTANT:
       // - Avoid UART1 defaults (GPIO9/10 are SPI flash pins on many ESP32 variants).
@@ -150,15 +144,23 @@ void setup() {
       .volume = configManagerGetVolume(),
   };
   jq6500PlayerInit(jqCfg);
+  jq6500PlayerStartTask();
+  schedulerStartTask();
+
+  systemManagerInit();
+  systemManagerStartTask();
+  networkManagerInit();
+  networkManagerStartTask();
+  authManagerInit("admin", "1234");
+
   webServerInit();
 
-  jq6500PlayerStartTask();
+  const bool networkOk = ensureNetwork();
   if (networkOk) {
     webServerStartTask();
   } else {
     logError("WEB", "Network down; web server not started");
   }
-  schedulerStartTask();
 
   logInfo("SYS", "System started");
 }
