@@ -56,6 +56,9 @@ void onSetDelay(const Event& event, void*) {
   if (v > 3600) {
     v = 3600;
   }
+  if (v == g_delaySeconds) {
+    return;
+  }
   g_delaySeconds = v;
   saveDelay(v);
   logInfo("CONF", "Delay updated");
@@ -64,8 +67,8 @@ void onSetDelay(const Event& event, void*) {
 }
 
 void configManagerInit() {
-  loadDelay();
+  (void)SPIFFS.begin(true);
   (void)eventBusRegisterHandler(EVENT_SET_DELAY, onSetDelay, nullptr);
+  loadDelay();
+  (void)eventBusSend(EVENT_SET_DELAY, g_delaySeconds);
 }
-
-int32_t configManagerGetDelaySeconds() { return g_delaySeconds; }

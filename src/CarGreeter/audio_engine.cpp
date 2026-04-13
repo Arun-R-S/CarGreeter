@@ -1,3 +1,4 @@
+#if 0
 #include "audio_engine.h"
 
 #include <driver/i2s.h>
@@ -95,3 +96,5 @@ void audioEngineStartTask(UBaseType_t priority, uint32_t stackWords) {
     logError("AUDIO", "Failed to start audio task");
   }
 }
+
+#endif

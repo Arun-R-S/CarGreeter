@@ -1,3 +1,4 @@
+#if 0
 #include "file_manager.h"
 
 #include <SPIFFS.h>
@@ -63,3 +64,5 @@ bool fileManagerEndUpload(bool success) {
   }
   return success;
 }
+
+#endif

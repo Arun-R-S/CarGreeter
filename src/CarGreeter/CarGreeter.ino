@@ -1,11 +1,10 @@
 #include <Arduino.h>
 #include <WiFi.h>
 
-#include "audio_engine.h"
 #include "auth_manager.h"
 #include "config_manager.h"
 #include "event_bus.h"
-#include "file_manager.h"
+#include "jq6500_player.h"
 #include "logger.h"
 #include "scheduler.h"
 #include "web_server.h"
@@ -34,23 +33,34 @@ void connectWifi() {
 }
 
 void setup() {
+  Serial.begin(115200);
+  Serial.println("Car Greeter Starting...");
   loggerInit();
   loggerStartTask();
 
   eventBusInit();
+  eventBusStartTask();
 
-  (void)fileManagerInit();
+  schedulerInit();
   configManagerInit();
   authManagerInit("admin", "1234");
 
-  audioEngineInit();
-  schedulerInit();
+  const Jq6500Config jqCfg{
+      // ESP32-CAM note: avoid Serial1 defaults (GPIO9/10 are flash pins).
+      // TX-only wiring is enough for basic playback control:
+      // ESP32 GPIO16 (TX2) -> JQ6500 RX, and keep JQ6500 TX unconnected.
+      .txPin = 16,
+      .rxPin = -1,
+      .baudRate = 9600,
+      .welcomeTrackIndex = 1,
+      .volume = 20,
+  };
+  jq6500PlayerInit(jqCfg);
   webServerInit();
 
   connectWifi();
 
-  audioEngineStartTask();
-  eventBusStartTask();
+  jq6500PlayerStartTask();
   webServerStartTask();
   schedulerStartTask();
 
