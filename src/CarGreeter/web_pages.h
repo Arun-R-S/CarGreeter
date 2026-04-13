@@ -28,12 +28,37 @@ static const char kIndexHtml[] PROGMEM = R"rawliteral(
     .two{display:grid;gap:10px}
     @media(min-width:520px){.two{grid-template-columns:1fr 1fr}}
     button{background:linear-gradient(180deg,#6ea8ff,#4b82ff);border:0;color:#04102b;border-radius:12px;padding:10px 12px;font-size:15px;font-weight:700;cursor:pointer}
-    button.secondary{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,.14)}
-    button.danger{background:linear-gradient(180deg,#ff6b6b,#ff4d4d);color:#2b0505}
     .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid rgba(255,255,255,.12);border-radius:999px;font-size:13px;color:var(--muted)}
     .list{margin-top:10px;display:grid;gap:8px}
     .net{display:flex;justify-content:space-between;gap:10px;border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:10px 12px;background:rgba(11,16,32,.55)}
     .net b{color:var(--text)}
+    button.secondary{
+      background:transparent;color:var(--text);
+      border:1px solid rgba(255, 255, 255, .14)
+    }
+    button.danger{
+      background:linear-gradient(180deg, #ff6b6b, #ff4d4d);
+      color: #2b0505
+    }
+    button.success {
+    background: linear-gradient(180deg, #6bffab, #4dffa0);
+    color: #000000;
+    }
+    button.primary {
+    background: linear-gradient(180deg, #22719f, #0b508d);
+    color: #000000;
+    }
+    button.warning {
+    background: linear-gradient(180deg, #ffcc00, #ff9900);
+    color: #000000;
+    }
+    button.info {
+    background: linear-gradient(180deg, #66ccff, #3399ff);
+    color: #000000;
+    }
+    button:hover {
+      opacity: 0.85;
+    }
   </style>
 </head>
 <body>
@@ -52,8 +77,8 @@ static const char kIndexHtml[] PROGMEM = R"rawliteral(
       <section class="card">
         <div class="title"><h2>Playback</h2><span class="muted">JQ6500 indexed tracks</span></div>
         <div class="row">
-          <button onclick="apiGet('/play')">Play now</button>
-          <button class="secondary" onclick="refresh()">Refresh</button>
+          <button class="success" onclick="apiGet('/play')">Play now</button>
+          <button class="warning" onclick="refresh()">Refresh</button>
         </div>
         <div class="two" style="margin-top:10px">
           <div>
@@ -94,7 +119,7 @@ static const char kIndexHtml[] PROGMEM = R"rawliteral(
             <label>Delay</label>
             <input id="delay" type="number" min="0" max="3600" value="5"/>
           </div>
-          <div style="display:flex;align-items:flex-end">
+          <div class="secondary" style="display:flex;align-items:flex-end">
             <button style="width:100%" onclick="setDelay()">Save delay</button>
           </div>
         </div>
@@ -116,7 +141,7 @@ static const char kIndexHtml[] PROGMEM = R"rawliteral(
           </div>
         </div>
         <div class="row" style="margin-top:10px">
-          <button onclick="saveHotspot()">Save hotspot</button>
+          <button class="success" onclick="saveHotspot()">Save hotspot</button>
         </div>
         <p class="muted">Password is not shown; enter a new one to change it.</p>
       </section>
@@ -125,7 +150,7 @@ static const char kIndexHtml[] PROGMEM = R"rawliteral(
         <div class="title"><h2>WiFi (STA)</h2><span class="muted">connect using saved credentials</span></div>
         <div class="muted" id="wifiStatus">Status: …</div>
         <div class="row">
-          <button class="secondary" onclick="scanWifi()">Scan</button>
+          <button class="warning" onclick="scanWifi()">Scan</button>
           <button class="danger" onclick="forgetWifi()">Forget WiFi</button>
         </div>
         <div class="list" id="wifiList"></div>
@@ -140,7 +165,7 @@ static const char kIndexHtml[] PROGMEM = R"rawliteral(
           </div>
         </div>
         <div class="row" style="margin-top:10px">
-          <button onclick="connectWifi()">Save & restart</button>
+          <button class="success" onclick="connectWifi()">Save & restart</button>
         </div>
         <p class="muted">If WiFi isn’t configured, device will always start the hotspot.</p>
       </section>
@@ -149,15 +174,15 @@ static const char kIndexHtml[] PROGMEM = R"rawliteral(
     <section class="card">
       <div class="title"><h2>System</h2><span class="muted">maintenance</span></div>
       <div class="row">
-        <button class="secondary" onclick="restart()">Restart</button>
+        <button class="warning" onclick="restart()">Restart</button>
         <button class="danger" onclick="factoryReset()">Factory reset</button>
-        <button class="secondary" onclick="downloadBackup()">Backup</button>
+        <button class="info" onclick="downloadBackup()">Backup</button>
       </div>
       <div style="margin-top:12px">
         <label>Restore (paste backup text and restore)</label>
         <textarea id="restoreText" placeholder="delaySeconds=5&#10;volume=20&#10;..."></textarea>
         <div class="row" style="margin-top:10px">
-          <button class="secondary" onclick="restore()">Restore & restart</button>
+          <button class="primary" onclick="restore()">Restore & restart</button>
         </div>
       </div>
       <p class="muted">All endpoints require Basic Auth.</p>
@@ -173,6 +198,10 @@ static const char kIndexHtml[] PROGMEM = R"rawliteral(
       return t;
     }
     async function refresh(){
+      // Sync device time from browser clock (works for both STA and AP mode).
+      try{
+        await apiPost('/api/time/sync', 'epochMs=' + encodeURIComponent(String(Date.now())));
+      }catch(e){}
       const s = await fetch('/api/settings').then(r=>r.json());
       document.getElementById('delay').value = s.delaySeconds;
       document.getElementById('volume').value = s.volume;
@@ -265,21 +294,78 @@ static const char kLogViewHtml[] PROGMEM = R"rawliteral(
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>CarGreeter Logs</title>
   <style>
-    body{font-family:system-ui,Arial;margin:20px;max-width:720px}
-    pre{border:1px solid #ddd;border-radius:10px;padding:14px;white-space:pre-wrap}
-    button{font-size:16px;padding:10px}
+    :root{--bg:#0b1020;--card:#121a33;--text:#e9ecf5;--muted:#aab3d3;--accent:#6ea8ff}
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:linear-gradient(180deg,#070a14, #0b1020);color:var(--text)}
+    header{padding:18px 16px;border-bottom:1px solid rgba(255,255,255,.06);position:sticky;top:0;background:rgba(11,16,32,.85);backdrop-filter:blur(10px)}
+    h1{margin:0;font-size:20px}
+    main{padding:16px;max-width:980px;margin:0 auto;display:grid;gap:12px}
+    .card{background:rgba(18,26,51,.92);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .muted{color:var(--muted);font-size:13px}
+    button{background:linear-gradient(180deg,#6ea8ff,#4b82ff);border:0;color:#04102b;border-radius:12px;padding:10px 12px;font-size:15px;font-weight:700;cursor:pointer}
+    button.secondary{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,.14)}
+    pre{margin:0;border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:12px;white-space:pre-wrap;background:rgba(11,16,32,.55);min-height:320px}
+    a{color:var(--accent);text-decoration:none;font-weight:700}
+    label{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
   </style>
 </head>
 <body>
-  <h1>Logs</h1>
-  <button onclick="load()">Refresh</button>
-  <pre id="logs">Loading...</pre>
+  <header>
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <h1>Logs</h1>
+      <a href="/">Back</a>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="secondary" onclick="load()">Refresh</button>
+      <button class="secondary" onclick="copyLogs()">Copy</button>
+      <label><input id="auto" type="checkbox" checked/> Auto refresh</label>
+      <label><input id="scroll" type="checkbox" checked/> Auto scroll</label>
+      <span class="muted" id="status">…</span>
+    </div>
+  </header>
+  <main>
+    <section class="card">
+      <div class="muted" style="margin-bottom:10px">Timestamps are device time (IST). It starts at Jan 01 2026 11:00 AM IST on boot and syncs when WiFi/NTP or a browser opens this page.</div>
+      <pre id="logs">Loading...</pre>
+    </section>
+  </main>
   <script>
-    async function load(){
-      const t = await fetch('/logs').then(r=>r.text());
-      document.getElementById('logs').textContent = t || '(empty)';
+    async function apiPost(url, body){
+      const r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body});
+      const t = await r.text();
+      if(!r.ok){ throw new Error(t || ('HTTP ' + r.status)); }
+      return t;
     }
-    setInterval(load, 1500);
+    async function syncTime(){
+      try{ await apiPost('/api/time/sync', 'epochMs=' + encodeURIComponent(String(Date.now()))); }catch(e){}
+    }
+    async function load(){
+      const st = document.getElementById('status');
+      try{
+        st.textContent = 'Loading…';
+        const t = await fetch('/logs').then(r=>r.text());
+        const el = document.getElementById('logs');
+        el.textContent = t || '(empty)';
+        if(document.getElementById('scroll').checked){
+          el.scrollTop = el.scrollHeight;
+        }
+        st.textContent = 'Updated';
+      }catch(e){
+        st.textContent = 'Error: ' + (e && e.message ? e.message : e);
+      }
+    }
+    function copyLogs(){
+      const t = document.getElementById('logs').textContent || '';
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(t);
+      }else{
+        alert('Clipboard not available');
+      }
+    }
+    setInterval(()=>{ if(document.getElementById('auto').checked) load(); }, 1500);
+    setInterval(syncTime, 180000);
+    syncTime();
     load();
   </script>
 </body>

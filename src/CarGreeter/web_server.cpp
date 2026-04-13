@@ -279,11 +279,24 @@ void handleRestore() {
   g_server.send(200, "text/plain", "Restored; restarting...");
 }
 
+void handleTimeSync() {
+  if (!authManagerEnsure(g_server)) {
+    return;
+  }
+  if (!g_server.hasArg("epochMs")) {
+    g_server.send(400, "text/plain", "Missing epochMs");
+    return;
+  }
+  const String epochMs = g_server.arg("epochMs");
+  (void)eventBusSendText(EVENT_TIME_SYNC, 0, epochMs.c_str(), nullptr);
+  g_server.send(200, "text/plain", "Time synced");
+}
+
 void handleLogs() {
   if (!authManagerEnsure(g_server)) {
     return;
   }
-  char buf[1600];
+  char buf[2200];
   loggerCopyRecent(buf, sizeof(buf));
   g_server.send(200, "text/plain", buf);
 }
@@ -315,6 +328,7 @@ void webServerInit() {
   g_server.on("/api/factory_reset", HTTP_POST, handleFactoryReset);
   g_server.on("/api/backup", HTTP_GET, handleBackup);
   g_server.on("/api/restore", HTTP_POST, handleRestore);
+  g_server.on("/api/time/sync", HTTP_POST, handleTimeSync);
 }
 
 void webServerStartTask(UBaseType_t priority, uint32_t stackWords) {

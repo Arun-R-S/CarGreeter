@@ -4,10 +4,13 @@
 #include <freertos/queue.h>
 #include <freertos/task.h>
 
+#include "time_manager.h"
+
 namespace {
 
 struct LogEntry {
   LogLevel level;
+  uint64_t epochMsUtc;
   char tag[12];
   char message[80];
 };
@@ -51,7 +54,9 @@ void loggerTask(void*) {
       continue;
     }
     storeRecent(entry);
-    Serial.printf("[%s] %s: %s\r\n", levelToString(entry.level), entry.tag, entry.message);
+    char ts[48];
+    timeManagerFormatIst(entry.epochMsUtc, ts, sizeof(ts));
+    Serial.printf("[%s] [%s] %s: %s\r\n", ts, levelToString(entry.level), entry.tag, entry.message);
   }
 }
 
@@ -62,6 +67,7 @@ void enqueue(LogLevel level, const char* tag, const char* message) {
 
   LogEntry entry{};
   entry.level = level;
+  entry.epochMsUtc = timeManagerNowEpochMsUtc();
   snprintf(entry.tag, sizeof(entry.tag), "%s", (tag != nullptr) ? tag : "");
   snprintf(entry.message, sizeof(entry.message), "%s", (message != nullptr) ? message : "");
 
@@ -107,7 +113,9 @@ void loggerCopyRecent(char* out, size_t outSize) {
   for (size_t i = 0; i < count; i++) {
     const size_t idx = (start + i) % kLogBufferEntries;
     const LogEntry& entry = g_recent[idx];
-    const int n = snprintf(out + written, outSize - written, "[%s] %s: %s\r\n",
+    char ts[48];
+    timeManagerFormatIst(entry.epochMsUtc, ts, sizeof(ts));
+    const int n = snprintf(out + written, outSize - written, "[%s] [%s] %s: %s\r\n", ts,
                            levelToString(entry.level), entry.tag, entry.message);
     if (n < 0) {
       break;

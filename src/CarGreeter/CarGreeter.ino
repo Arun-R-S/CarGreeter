@@ -12,6 +12,7 @@
 #include "network_manager.h"
 #include "scheduler.h"
 #include "system_manager.h"
+#include "time_manager.h"
 #include "web_server.h"
 
 namespace {
@@ -61,6 +62,7 @@ bool connectWifiSta(const char* ssid, const char* password) {
 
   if (WiFi.status() == WL_CONNECTED) {
     logInfo("WIFI", "Connected");
+    (void)eventBusSend(EVENT_TIME_SYNC_NTP, 0);
     return true;
   }
 
@@ -120,6 +122,10 @@ void setup() {
 
   schedulerInit();
   (void)initNvs();
+  // Default wall clock reference at boot (IST):
+  // Jan 01 2026 11:00 AM IST == 2026-01-01 05:30:00Z.
+  timeManagerInit(1767245400ULL * 1000ULL);
+  timeManagerStartTask();
   configManagerInit();
   configManagerStartTask();
   systemManagerInit();
