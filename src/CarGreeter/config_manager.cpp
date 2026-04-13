@@ -114,7 +114,11 @@ bool loadBestFromNvs(SettingsV1* outSettings, uint32_t* outSeq, bool* outLastSlo
   }
 
   Preferences prefs;
-  if (!prefs.begin(kPrefsNamespace, true)) {
+  // IMPORTANT:
+  // - `Preferences.begin(ns, true)` uses NVS_READONLY and fails with NOT_FOUND
+  //   on a fresh device (namespace not created yet).
+  // - Open read-write even for reads so we can detect "no keys" vs. hard failure.
+  if (!prefs.begin(kPrefsNamespace, false)) {
     logWarn("CONF", "NVS begin failed");
     return false;
   }
@@ -199,7 +203,7 @@ void configTask(void*) {
     if ((now - g_lastChangeMs) < kDebounceMs) {
       continue;
     }
-    if ((now - g_lastSaveMs) < kMinWriteIntervalMs) {
+    if (g_lastSaveMs != 0 && (now - g_lastSaveMs) < kMinWriteIntervalMs) {
       continue;
     }
 

@@ -1,6 +1,9 @@
 #include <Arduino.h>
 #include <WiFi.h>
 
+#include <esp_err.h>
+#include <nvs_flash.h>
+
 #include "auth_manager.h"
 #include "config_manager.h"
 #include "event_bus.h"
@@ -17,6 +20,31 @@ constexpr const char* kWifiPassword = "YOUR_WIFI_PASSWORD";
 constexpr const char* kApSsid = "CarGreeter";
 // Minimum 8 chars for WPA2. Change this.
 constexpr const char* kApPassword = "car12345";
+
+bool initNvs() {
+  esp_err_t err = nvs_flash_init();
+  if (err == ESP_OK) {
+    logInfo("NVS", "Initialized");
+    return true;
+  }
+
+  if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+    logWarn("NVS", "Init requires erase");
+    const esp_err_t eraseErr = nvs_flash_erase();
+    if (eraseErr != ESP_OK) {
+      logError("NVS", esp_err_to_name(eraseErr));
+      return false;
+    }
+    err = nvs_flash_init();
+    if (err == ESP_OK) {
+      logInfo("NVS", "Initialized after erase");
+      return true;
+    }
+  }
+
+  logError("NVS", esp_err_to_name(err));
+  return false;
+}
 
 bool connectWifiSta() {
   logInfo("WIFI", "Connecting...");
@@ -72,6 +100,7 @@ void setup() {
   eventBusStartTask();
 
   schedulerInit();
+  (void)initNvs();
   configManagerInit();
   configManagerStartTask();
   authManagerInit("admin", "1234");
