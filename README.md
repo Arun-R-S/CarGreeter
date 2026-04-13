@@ -23,6 +23,8 @@ This project uses an **ESP32-C3 microcontroller** to:
 * Play it automatically after boot (once per power cycle)
 * Allow configuration and control via a web interface
 
+For a detailed overview and complete documentation map, see **[📘 Full Project Overview](docs/01-overview.md)**.
+
 ---
 
 ## 🏗️ Architecture Highlights

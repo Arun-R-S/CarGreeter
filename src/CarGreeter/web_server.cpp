@@ -189,7 +189,6 @@ void handleBackup() {
   if (!authManagerEnsure(g_server)) {
     return;
   }
-  const bool secrets = g_server.hasArg("secrets") && g_server.arg("secrets") == "1";
 
   char wifiSsid[33];
   char wifiPass[65];
@@ -198,14 +197,13 @@ void handleBackup() {
   configManagerCopyWifiCredentials(wifiSsid, sizeof(wifiSsid), wifiPass, sizeof(wifiPass));
   configManagerCopyHotspotCredentials(apSsid, sizeof(apSsid), apPass, sizeof(apPass));
 
-  char out[768];
+  char out[1024];
   snprintf(out, sizeof(out),
-           "delaySeconds=%ld\nvolume=%ld\npreloadedIndex=%u\ncustomIndex=%u\nwifiSsid=%s\n%s%sapSsid=%s\n%s%s",
+           "delaySeconds=%ld\nvolume=%ld\npreloadedIndex=%u\ncustomIndex=%u\nwifiSsid=%s\nwifiPassword=%s\napSsid=%s\napPassword=%s",
            static_cast<long>(configManagerGetDelaySeconds()), static_cast<long>(configManagerGetVolume()),
            static_cast<unsigned>(configManagerGetPreloadedTrackIndex()),
-           static_cast<unsigned>(configManagerGetCustomTrackIndex()), wifiSsid,
-           secrets ? "wifiPassword=" : "", secrets ? wifiPass : "", secrets ? "\n" : "",
-           apSsid, secrets ? "apPassword=" : "", secrets ? apPass : "");
+           static_cast<unsigned>(configManagerGetCustomTrackIndex()),
+           wifiSsid, wifiPass, apSsid, apPass);
 
   g_server.send(200, "text/plain", out);
 }

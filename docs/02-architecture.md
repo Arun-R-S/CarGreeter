@@ -111,14 +111,18 @@ Module → Logger API → Log Queue → Logger Task → Output (Serial + Web)
 
 ### Components:
 
-* JQ6500 Player
-* Config Manager
-* Scheduler
+* JQ6500 Player (audio control)
+* Config Manager (configuration)
+* Scheduler (boot delay & timing)
+* System Manager (metrics collection)
+* Network Manager (connectivity)
+* Time Manager (real-time clock)
 
 ### Responsibility:
 
 * Execute system logic
 * Respond to events
+* Provide data to Web Server
 
 ---
 
@@ -144,13 +148,17 @@ The system uses multiple tasks to ensure **non-blocking execution**.
 
 ## 🧵 Tasks Overview
 
-| Task            | Responsibility       |
-| --------------- | -------------------- |
-| Web Server Task | Handle HTTP requests |
-| JQ6500 Task     | Audio control (UART) |
-| Logger Task     | Process logs         |
-| Scheduler Task  | Handle delay logic   |
-| Settings Task   | Deferred settings I/O |
+| Task              | Responsibility                   |
+| ----------------- | -------------------------------- |
+| Web Server Task   | Handle HTTP requests & responses |
+| JQ6500 Task       | Audio control (UART)             |
+| Logger Task       | Process logs to outputs          |
+| Scheduler Task    | Handle boot delay & timing logic |
+| Config Task       | Manage persistent settings       |
+| Network Task      | Monitor WiFi connectivity        |
+| System Task       | Gather system metrics            |
+| Time Task         | Maintain real-time clock         |
+| Event Bus Task    | Distribute events to consumers   |
 
 ---
 

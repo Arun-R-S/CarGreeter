@@ -53,23 +53,60 @@ EVENT_PLAY → value = 0
 
 # 📚 Event Types
 
-## 🎯 Core Events
+## 🎯 Core Control Events
 
-| Event             | Description            |
-| ----------------- | ---------------------- |
-| EVENT_PLAY        | Trigger welcome playback |
-| EVENT_SET_DELAY   | Update playback delay    |
+| Event           | Value | Description                |
+| --------------- | ----- | -------------------------- |
+| EVENT_PLAY      | 0     | Trigger audio playback     |
+| EVENT_STOP      | 2     | Stop audio playback        |
 
 ---
 
-## 🧪 Optional/Future Events
+## ⏱ Configuration Events
 
-| Event               | Description               |
-| ------------------- | ------------------------- |
-| EVENT_STOP          | Stop playback             |
-| EVENT_VOLUME_CHANGE | Adjust volume             |
-| EVENT_PLAY_TRACK    | Play a specific track     |
-| EVENT_ERROR         | System error notification |
+| Event             | Value | Description              |
+| ----------------- | ----- | ------------------------ |
+| EVENT_SET_DELAY   | 1     | Update playback delay    |
+| EVENT_VOLUME_CHANGE | 3   | Change audio volume      |
+
+---
+
+## 📡 WiFi Events
+
+| Event          | Value | Description              |
+| -------------- | ----- | ------------------------ |
+| EVENT_WIFI_SET | 5     | Configure WiFi (STA)     |
+| EVENT_WIFI_FORGET | 6  | Forget WiFi credentials  |
+| EVENT_WIFI_SCAN | 12   | Scan available networks  |
+| EVENT_HOTSPOT_SET | 7  | Configure hotspot (AP)   |
+
+---
+
+## 🔊 Audio Configuration Events
+
+| Event                   | Value | Description                  |
+| ----------------------- | ----- | ---------------------------- |
+| EVENT_AUDIO_SET_PRELOADED | 8   | Set preloaded track index    |
+| EVENT_AUDIO_SET_CUSTOM    | 9   | Set custom track index       |
+
+---
+
+## ⚙️ System Events
+
+| Event                    | Value | Description          |
+| ------------------------ | ----- | -------------------- |
+| EVENT_SYSTEM_RESTART     | 10    | Restart device       |
+| EVENT_SYSTEM_FACTORY_RESET | 11  | Reset to defaults    |
+| EVENT_ERROR              | 4     | System error occurred |
+
+---
+
+## ⏰ Time Synchronization Events
+
+| Event             | Value | Description                      |
+| ----------------- | ----- | -------------------------------- |
+| EVENT_TIME_SYNC   | 13    | Sync time from external source   |
+| EVENT_TIME_SYNC_NTP | 14  | Sync time via NTP                |
 
 ---
 
@@ -77,10 +114,11 @@ EVENT_PLAY → value = 0
 
 Modules that **generate events**:
 
-| Module       | Events Produced             |
-| ------------ | --------------------------- |
-| Web Server   | EVENT_PLAY, EVENT_SET_DELAY |
-| Scheduler    | EVENT_PLAY                  |
+| Module       | Events Produced                                           |
+| ------------ | --------------------------------------------------------- |
+| Web Server   | EVENT_PLAY, EVENT_SET_DELAY, EVENT_VOLUME_CHANGE, EVENT_AUDIO_SET_*, EVENT_WIFI_*, EVENT_HOTSPOT_SET, EVENT_SYSTEM_*, EVENT_TIME_SYNC |
+| Scheduler    | EVENT_PLAY                                                |
+| Network Manager | EVENT_WIFI_SET (on connection)                         |
 
 ---
 
@@ -88,11 +126,13 @@ Modules that **generate events**:
 
 Modules that **handle events**:
 
-| Module         | Events Consumed       |
-| -------------- | --------------------- |
-| JQ6500 Player  | EVENT_PLAY            |
-| Config Manager | EVENT_SET_DELAY       |
-| Logger         | (optional monitoring) |
+| Module             | Events Consumed                                  |
+| ------------------ | ------------------------------------------------ |
+| JQ6500 Player      | EVENT_PLAY, EVENT_STOP, EVENT_VOLUME_CHANGE      |
+| Config Manager     | EVENT_SET_DELAY, EVENT_AUDIO_SET_*               |
+| WiFi/Network       | EVENT_WIFI_SET, EVENT_WIFI_FORGET, EVENT_WIFI_SCAN, EVENT_HOTSPOT_SET |
+| System            | EVENT_SYSTEM_RESTART, EVENT_SYSTEM_FACTORY_RESET |
+| Time Manager       | EVENT_TIME_SYNC, EVENT_TIME_SYNC_NTP             |
 
 ---
 
@@ -101,7 +141,7 @@ Modules that **handle events**:
 ## Queue Configuration
 
 ```text
-Queue Size: 10–20 events
+Queue Size: Dynamically sized based on event pressure
 Type: FIFO (First In First Out)
 ```
 
@@ -110,7 +150,7 @@ Type: FIFO (First In First Out)
 ## Design Rules
 
 * Must not block when sending events
-* If queue is full → event may be dropped
+* If queue is full → event handling may be prioritized
 * Queue must be thread-safe (FreeRTOS handles this)
 
 ---

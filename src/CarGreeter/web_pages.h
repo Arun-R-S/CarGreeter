@@ -284,7 +284,7 @@ static const char kIndexHtml[] PROGMEM = R"rawliteral(
       const blob = new Blob([txt], {type:'text/plain'});
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'car_greeter_backup.txt';
+      a.download = 'car_greeter_backup_' + new Date().toISOString().split('T')[0] + '.txt';
       a.click();
       URL.revokeObjectURL(a.href);
     }

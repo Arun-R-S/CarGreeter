@@ -151,6 +151,29 @@ The **ESP32-C3 + JQ6500 Audio Greeting System in Car** is a WiFi-enabled embedde
 
 ---
 
+## 📚 Documentation Map
+
+Complete system documentation is organized in the `/docs` folder:
+
+| Topic                | File                                      | Purpose                                |
+| -------------------- | ----------------------------------------- | -------------------------------------- |
+| Overview             | [📄 01-overview.md](01-overview.md)      | High-level project description         |
+| Architecture         | [📄 02-architecture.md](02-architecture.md) | System design and data flow            |
+| Modules              | [📄 03-modules.md](03-modules.md)        | Module responsibilities & interfaces  |
+| Event System         | [📄 04-event-system.md](04-event-system.md) | Inter-module communication            |
+| Web UI               | [📄 05-web-ui.md](05-web-ui.md)          | User interface pages & actions        |
+| Authentication       | [📄 06-authentication.md](06-authentication.md) | Security & access control           |
+| Audio System         | [📄 07-audio-system.md](07-audio-system.md) | JQ6500 audio playback                |
+| Logging              | [📄 08-logging.md](08-logging.md)        | Log architecture & implementation     |
+| Storage              | [📄 09-storage.md](09-storage.md)        | Configuration & backup system         |
+| Scheduler            | [📄 10-scheduler.md](10-scheduler.md)    | Boot delay & timing logic             |
+| API Specification    | [📄 11-api-spec.md](11-api-spec.md)      | Complete endpoint documentation       |
+| Constraints          | [📄 12-non-functional.md](12-non-functional.md) | Performance & design rules          |
+| Future Enhancements  | [📄 13-future-enhancements.md](13-future-enhancements.md) | Roadmap & planned features         |
+| Build & Deployment   | [📄 14-build-deployment.md](14-build-deployment.md) | Setup & deployment guide           |
+
+---
+
 ## 🧩 Design Philosophy
 
 This project is designed with:

@@ -50,6 +50,10 @@ JavaScript → API Calls
 * Control system
 * Configure delay
 * Trigger playback
+* Manage WiFi and hotspot
+* Configure audio settings
+* System maintenance (restart, factory reset)
+* Backup and restore configuration
 
 ---
 
@@ -57,9 +61,12 @@ JavaScript → API Calls
 
 * Delay configuration input
 * Play button
-* Navigation to logs page
-
----
+* WiFi scanning and connection
+* Hotspot (AP) configuration
+* Audio volume and track selection
+* System controls and configuration
+* Backup/restore buttons
+* Navigation links to other pages
 
 ---
 
@@ -67,15 +74,64 @@ JavaScript → API Calls
 
 ### Purpose
 
-* Display system logs
+* Display system logs in real-time
+* Historical log viewing
 
 ---
 
 ### Features
 
-* Auto-refresh logs
+* Auto-refresh logs every 1.5 seconds
 * Manual refresh button
 * Scrollable log output
+* Copy-to-clipboard functionality
+* Circular buffer (25 most recent entries)
+
+---
+
+## 3. System Information Page (`/sysinfo`)
+
+### Purpose
+
+* Display comprehensive system health and status
+
+---
+
+### Features
+
+* **Hardware Section**
+  - Chip model (ESP32-C3)
+  - CPU core count
+  - CPU frequency (MHz)
+  - Chip revision number
+  - Built-in features (WiFi)
+
+* **Memory Section**
+  - Total heap size (327680 bytes)
+  - Free heap memory (current)
+  - Used heap memory (current)
+  - Heap utilization percentage with visual progress bar
+  - Minimum free heap recorded
+
+* **Flash Section**
+  - Total flash memory size
+
+* **Network Section**
+  - WiFi mode (station/AP)
+  - Connection status (connected/disconnected)
+  - Signal strength (RSSI in dBm with emoji indicators)
+  - MAC address
+  - IP address
+  - Gateway address
+  - Subnet mask
+  - DNS servers (primary and secondary)
+
+* **System Section**
+  - Uptime (human-readable format: "X days, Y hours, Z minutes")
+  - Uptime in seconds
+  - Active task count
+
+* **Auto-Refresh**: Updates every 3 seconds
 
 ---
 
@@ -83,19 +139,30 @@ JavaScript → API Calls
 
 ```text id="cztqhl"
 / (Main Page)
-   ↓
-/logview (Logs Page)
+   ├→ /logview (Logs Page)
+   └→ /sysinfo (System Information Page)
 ```
 
 ---
 
 # 🔧 UI Actions → API Mapping
 
-| UI Action    | API Endpoint  |
-| ------------ | ------------- |
-| Play Audio   | GET /play     |
-| Set Delay    | GET /setDelay |
-| View Logs    | GET /logs     |
+| UI Section         | UI Action              | API Endpoint          |
+| ------------------ | ---------------------- | --------------------- |
+| Audio Control      | Play Audio             | GET /play             |
+| Delay Settings     | Set Delay              | GET /setDelay         |
+| Log Viewer         | View Logs              | GET /logs             |
+| System Info        | View System Details    | GET /api/sysinfo      |
+| WiFi Config        | Scan Networks          | GET /api/wifi/scan    |
+| WiFi Config        | Connect to Network     | POST /api/wifi/connect |
+| WiFi Config        | Forget Network         | POST /api/wifi/forget |
+| Hotspot Config     | Set Hotspot Settings   | POST /api/hotspot     |
+| Audio Settings     | Configure Audio        | POST /api/audio       |
+| System Control     | Restart Device         | POST /api/restart     |
+| System Control     | Factory Reset          | POST /api/factory_reset |
+| Backup             | Download Backup        | GET /api/backup       |
+| Restore            | Upload Settings        | POST /api/restore     |
+| Time Sync          | Sync Time with Browser | POST /api/time/sync   |
 
 ---
 

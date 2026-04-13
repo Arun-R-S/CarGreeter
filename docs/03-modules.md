@@ -14,15 +14,18 @@ Each module:
 
 # 🧠 Module List
 
-| Module         | Responsibility             |
-| -------------- | -------------------------- |
-| Web Server     | Handle HTTP requests       |
-| Auth Manager   | Handle authentication      |
-| Event Bus      | Inter-module communication |
-| JQ6500 Player  | Audio control (UART)       |
-| Config Manager | Configuration management   |
-| Scheduler      | Boot delay & timed actions |
-| Logger         | Logging system             |
+| Module             | Responsibility                          |
+| ------------------ | ---------------------------------------- |
+| Web Server         | Handle HTTP requests & API routes       |
+| Auth Manager       | Handle authentication & authorization   |
+| Event Bus          | Inter-module communication              |
+| JQ6500 Player      | Audio control (UART)                    |
+| Config Manager     | Configuration management & storage      |
+| Scheduler          | Boot delay & timed actions              |
+| Logger             | Logging system                          |
+| Network Manager    | WiFi state management & connectivity    |
+| System Manager     | System information & health metrics     |
+| Time Manager       | Real-time clock and time synchronization|
 
 ---
 
@@ -266,6 +269,119 @@ Boot → Wait → EVENT_PLAY → Exit
 
 ---
 
+# � 8. Network Manager Module
+
+## Responsibility
+
+* Monitor WiFi connection state
+* Manage network mode (Station vs Access Point)
+* Provide network status to other modules
+
+---
+
+## Key Rules
+
+* Must be non-blocking
+* Updates network state via events
+* No direct WiFi control (delegated to web/config handlers)
+
+---
+
+## Features
+
+* WiFi connection monitoring
+* RSSI (signal strength) tracking
+* IP address management
+* Gateway and DNS resolution
+
+---
+
+## Dependencies
+
+* WiFi library
+* Logger
+* Event Bus
+
+---
+
+# ⚙️ 9. System Manager Module
+
+## Responsibility
+
+* Gather and expose system information
+* CPU frequency and core count
+* Memory metrics (heap usage)
+* Flash memory information
+* Device uptime calculation
+
+---
+
+## Key Rules
+
+* Must be non-blocking
+* Provides read-only metrics
+* Used by Web Server for `/api/sysinfo` endpoint
+
+---
+
+## Features
+
+* Chip model and revision detection
+* Real-time heap statistics
+* Flash size reporting
+* Uptime in human-readable format
+* Task count monitoring
+
+---
+
+## Dependencies
+
+* ESP32 HAL APIs
+* Logger
+
+---
+
+# ⏰ 10. Time Manager Module
+
+## Responsibility
+
+* Maintain real-time clock for device
+* Synchronize time from external sources
+* Provide timestamps for logging
+
+---
+
+## Key Rules
+
+* Must be non-blocking
+* Handles time synchronization events
+* Used by Logger for timestamp generation
+
+---
+
+## Features
+
+* Wall clock initialization at boot
+* Time synchronization from NTP (optional)
+* Time synchronization from browser
+* Millisecond precision timestamp generation
+
+---
+
+## Input
+
+* EVENT_TIME_SYNC_NTP
+
+---
+
+## Dependencies
+
+* system time functions
+* Logger
+* Event Bus
+
+---
+
 # 🔗 Module Interaction Rules
 
 ## Allowed
@@ -293,6 +409,9 @@ Web Server → Auth Manager → Event Bus
 Event Bus → All Modules
 JQ6500 Player → (UART to JQ6500 module)
 All Modules → Logger
+Network Manager → WiFi library
+System Manager → ESP32 HAL
+Time Manager → System time functions
 ```
 
 ---
