@@ -14,7 +14,8 @@ namespace {
 constexpr const char* kWifiSsid = "YOUR_WIFI_SSID";
 constexpr const char* kWifiPassword = "YOUR_WIFI_PASSWORD";
 
-void connectWifi() {
+bool connectWifi() {
+  logInfo("WIFI", "Connecting...");
   WiFi.mode(WIFI_STA);
   WiFi.begin(kWifiSsid, kWifiPassword);
 
@@ -25,9 +26,11 @@ void connectWifi() {
 
   if (WiFi.status() == WL_CONNECTED) {
     logInfo("WIFI", "Connected");
-  } else {
-    logWarn("WIFI", "Not connected");
+    return true;
   }
+
+  logWarn("WIFI", "Not connected (timeout)");
+  return false;
 }
 
 }
@@ -45,11 +48,14 @@ void setup() {
   configManagerInit();
   authManagerInit("admin", "1234");
 
+  const bool wifiOk = connectWifi();
+
   const Jq6500Config jqCfg{
-      // ESP32-CAM note: avoid Serial1 defaults (GPIO9/10 are flash pins).
-      // TX-only wiring is enough for basic playback control:
-      // ESP32 GPIO16 (TX2) -> JQ6500 RX, and keep JQ6500 TX unconnected.
-      .txPin = 16,
+      // IMPORTANT:
+      // - Avoid UART1 defaults (GPIO9/10 are SPI flash pins on many ESP32 variants).
+      // - Avoid GPIO16/17 on ESP32-WROVER/ESP32-CAM builds that use PSRAM (these pins are commonly wired to PSRAM).
+      // - TX-only wiring is enough for basic playback control: ESP32 TX -> JQ6500 RX; leave JQ6500 TX unconnected.
+      .txPin = 4,
       .rxPin = -1,
       .baudRate = 9600,
       .welcomeTrackIndex = 1,
@@ -58,10 +64,12 @@ void setup() {
   jq6500PlayerInit(jqCfg);
   webServerInit();
 
-  connectWifi();
-
   jq6500PlayerStartTask();
-  webServerStartTask();
+  if (wifiOk) {
+    webServerStartTask();
+  } else {
+    logWarn("WEB", "WiFi down; web server not started");
+  }
   schedulerStartTask();
 
   logInfo("SYS", "System started");

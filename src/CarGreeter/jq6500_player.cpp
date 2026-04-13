@@ -87,6 +87,13 @@ void jq6500PlayerInit(const Jq6500Config& config) {
     g_cfg.welcomeTrackIndex = 1;
   }
 
+  if (g_cfg.txPin == 16 || g_cfg.txPin == 17) {
+    logWarn("JQ6500", "TX pin 16/17 may conflict with PSRAM on some ESP32 modules");
+  }
+  if (g_cfg.txPin == 9 || g_cfg.txPin == 10) {
+    logWarn("JQ6500", "TX pin 9/10 may conflict with SPI flash on some ESP32 modules");
+  }
+
   // IMPORTANT (classic ESP32/ESP32-CAM):
   // - UART1 defaults to GPIO9/10 which are tied to SPI flash.
   // - Use UART2 (Serial2) with explicit pins, and allow TX-only wiring if desired.
