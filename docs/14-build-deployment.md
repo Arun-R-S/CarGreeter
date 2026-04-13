@@ -56,8 +56,8 @@ https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32
 
 ## Required Components
 
-* ESP32 Development Board
-* I2S DAC (e.g., MAX98357A)
+* ESP32-C3 Super Mini Development Board (HW-466AB)
+* JQ6500 Voice Sound Module (16Mbit)
 * Speaker or AUX output
 * USB cable
 
@@ -66,13 +66,18 @@ https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32
 ## Example Wiring
 
 ```text id="7yo3l1"
-ESP32      → DAC
-----------------------
-GPIO26     → BCLK
-GPIO25     → LRCK
-GPIO22     → DIN
-GND        → GND
-5V         → VIN
+ESP32-C3                 → JQ6500
+-----------------------------------------
+GND                      → GND
+3V3 or 5V (per module)   → VCC
+TX (GPIO of choice)      → RX
+RX (GPIO of choice)      → TX (optional)
+
+JQ6500                   → AUX Jack / Car Stereo
+-----------------------------------------
+DACL                     → AUX Left (via DC-blocking cap)
+DACR                     → AUX Right (via DC-blocking cap)
+GND                      → AUX Ground
 ```
 
 ---
@@ -106,7 +111,6 @@ Install via Library Manager:
 * WebServer (ESP32)
 * FS (built-in)
 * SPIFFS / LittleFS (built-in)
-* I2S (ESP32 built-in)
 
 ---
 
@@ -114,9 +118,9 @@ Install via Library Manager:
 
 ## Board Settings
 
-* Board: **ESP32 Dev Module**
+* Board: **ESP32C3 Dev Module**
 * Flash Size: 4MB (or higher)
-* Partition Scheme: Default / SPIFFS enabled
+* Partition Scheme: Default (enable SPIFFS only if you persist config)
 * Upload Speed: 115200 or higher
 
 ---
@@ -179,7 +183,6 @@ Password: 1234
 ## ✅ Basic Tests
 
 * Open UI page
-* Upload audio file
 * Set delay
 * Trigger playback
 * View logs

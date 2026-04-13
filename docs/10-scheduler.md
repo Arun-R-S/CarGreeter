@@ -159,7 +159,7 @@ If delay reached AND executed == false:
 ## Example Flow
 
 ```text id="6ql8jt"
-Scheduler → EVENT_PLAY → Audio Engine
+Scheduler → EVENT_PLAY → JQ6500 Player
 ```
 
 ---

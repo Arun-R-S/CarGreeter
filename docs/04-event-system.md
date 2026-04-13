@@ -57,9 +57,8 @@ EVENT_PLAY → value = 0
 
 | Event             | Description            |
 | ----------------- | ---------------------- |
-| EVENT_PLAY        | Trigger audio playback |
-| EVENT_SET_DELAY   | Update playback delay  |
-| EVENT_UPLOAD_DONE | File upload completed  |
+| EVENT_PLAY        | Trigger welcome playback |
+| EVENT_SET_DELAY   | Update playback delay    |
 
 ---
 
@@ -69,6 +68,7 @@ EVENT_PLAY → value = 0
 | ------------------- | ------------------------- |
 | EVENT_STOP          | Stop playback             |
 | EVENT_VOLUME_CHANGE | Adjust volume             |
+| EVENT_PLAY_TRACK    | Play a specific track     |
 | EVENT_ERROR         | System error notification |
 
 ---
@@ -81,7 +81,6 @@ Modules that **generate events**:
 | ------------ | --------------------------- |
 | Web Server   | EVENT_PLAY, EVENT_SET_DELAY |
 | Scheduler    | EVENT_PLAY                  |
-| File Manager | EVENT_UPLOAD_DONE           |
 
 ---
 
@@ -91,7 +90,7 @@ Modules that **handle events**:
 
 | Module         | Events Consumed       |
 | -------------- | --------------------- |
-| Audio Engine   | EVENT_PLAY            |
+| JQ6500 Player  | EVENT_PLAY            |
 | Config Manager | EVENT_SET_DELAY       |
 | Logger         | (optional monitoring) |
 
@@ -140,9 +139,9 @@ sendEvent(EVENT_PLAY)
       ↓
 Event Queue
       ↓
-Audio Task
+JQ6500 Player
       ↓
-playAudio()
+send UART play command
 ```
 
 ---

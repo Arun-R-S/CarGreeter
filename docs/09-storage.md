@@ -4,10 +4,10 @@
 
 The Storage System is responsible for:
 
-* Storing audio files
 * Managing configuration data
-* Providing file access for playback
-* Supporting file upload via web UI
+* Persisting settings across reboots (optional)
+
+Audio storage is handled by the **JQ6500 module internal flash** in this project.
 
 ---
 
@@ -15,7 +15,6 @@ The Storage System is responsible for:
 
 * Reliable file storage
 * Low memory usage
-* Fast read access for streaming
 * Simple file structure
 * Minimal wear on flash memory
 
@@ -24,14 +23,14 @@ The Storage System is responsible for:
 # 🏗️ Storage Architecture
 
 ```text id="f0g3u2"
-Web Upload → File Manager → Storage (SPIFFS / LittleFS / External Flash)
-                                      ↓
-                                  Audio Engine
+ESP32-C3 Flash (SPIFFS/LittleFS, optional) → Config Manager (delay, future settings)
+
+JQ6500 Internal Flash → Welcome Audio Track (played by JQ6500)
 ```
 
 ---
 
-# 📦 Storage Options
+# 📦 Storage Options (ESP32-C3)
 
 ## 1. Internal Flash (Recommended)
 
@@ -52,8 +51,7 @@ Web Upload → File Manager → Storage (SPIFFS / LittleFS / External Flash)
 
 ## 2. External Flash (Optional)
 
-* SPI-based flash (8MB / 16MB)
-* Useful for larger audio files
+External flash is not required for welcome audio (stored on JQ6500).
 
 ---
 
@@ -62,51 +60,43 @@ Web Upload → File Manager → Storage (SPIFFS / LittleFS / External Flash)
 ## Basic Layout
 
 ```text id="3a0v19"
-/audio.wav          ← main audio file
-/config.json        ← configuration file
+/config.txt        ← configuration file (delay, future settings)
 ```
 
 ---
 
 ## Rules
 
-* Only one active audio file (current version)
-* Fixed filenames for simplicity
+* Keep config small
+* Avoid frequent writes
 
 ---
 
 # 📤 File Upload Flow
 
 ```text id="d3p8mp"
-Browser → POST /upload
+PC / Tooling
         ↓
-Web Server
+Program JQ6500 internal flash
         ↓
-File Manager
-        ↓
-Write file to storage
-        ↓
-EVENT_UPLOAD_DONE (optional)
+Welcome track available for playback
 ```
 
 ---
 
-# ⚙️ File Manager Module
+# ⚙️ Local Storage Module (Optional)
 
 ## Responsibility
 
-* Handle file read/write operations
-* Manage storage access
-* Provide streaming support
+* Read/write small configuration values
+* Keep storage access lightweight and infrequent
 
 ---
 
 ## Key Functions
 
-* `saveFile()`
-* `readFile()`
-* `openFileStream()`
-* `deleteFile()`
+* Load config on boot
+* Save config only when changed
 
 ---
 
@@ -114,15 +104,15 @@ EVENT_UPLOAD_DONE (optional)
 
 ## Upload Behavior
 
-* Replace existing file
-* Overwrite `/audio.wav`
+* Audio is stored on JQ6500 internal flash
+* Update audio via the programming method supported by your JQ6500 module
 
 ---
 
 ## Playback Behavior
 
-* File opened in read mode
-* Streamed in chunks
+* ESP32-C3 sends a play command
+* JQ6500 reads/decodes the track from its internal flash
 
 ---
 
@@ -130,16 +120,15 @@ EVENT_UPLOAD_DONE (optional)
 
 ## Design
 
-* Read small chunks (512–1024 bytes)
-* Pass to Audio Engine
-* Repeat until EOF
+* No ESP32-side audio streaming in this design
+* ESP32-C3 only controls playback via UART
 
 ---
 
 ## Benefits
 
-* Low RAM usage
-* Smooth playback
+* Low ESP32-C3 RAM usage
+* Stable playback handled by JQ6500
 
 ---
 
@@ -148,17 +137,15 @@ EVENT_UPLOAD_DONE (optional)
 ## File
 
 ```text id="j1f6pp"
-/config.json
+/config.txt
 ```
 
 ---
 
 ## Example Content
 
-```json
-{
-  "delay": 5
-}
+```text
+delay=5
 ```
 
 ---
@@ -181,9 +168,8 @@ EVENT_UPLOAD_DONE (optional)
 
 # 🧠 Memory Considerations
 
-* Do not load entire file into RAM
-* Use streaming
-* Avoid large buffers
+* Keep buffers small
+* Avoid large allocations
 
 ---
 
@@ -197,27 +183,21 @@ EVENT_UPLOAD_DONE (optional)
 
 # 🧪 Testing Guidelines
 
-* Upload audio file via UI
-* Verify file saved correctly
-* Test playback after upload
 * Verify config persistence after reboot
 
 ---
 
 # 🔄 Error Handling
 
-* File not found → log error
-* Write failure → log error
-* Corrupt file → skip playback
+* Config read failure → use defaults and log warning
+* Config write failure → log warning
 
 ---
 
 # 🚀 Future Enhancements
 
-* Multiple audio files
-* File browser UI
-* Storage usage display
-* External SD card support
+* Track selection and volume stored in config
+* Optional: switch to I2S-based design if browser audio upload is required
 
 ---
 
@@ -225,10 +205,8 @@ EVENT_UPLOAD_DONE (optional)
 
 The Storage System provides:
 
-* Reliable file handling
-* Efficient streaming support
-* Persistent configuration storage
-* Integration with upload and playback systems
+* Persistent configuration storage (optional)
+* Clear separation: config on ESP32-C3, audio on JQ6500
 
 ---
 

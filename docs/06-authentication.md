@@ -71,7 +71,6 @@ All sensitive endpoints MUST be protected.
 | `/`         | Main UI           |
 | `/play`     | Trigger playback  |
 | `/setDelay` | Configure delay   |
-| `/upload`   | Upload audio file |
 | `/logs`     | Fetch logs        |
 | `/logview`  | Log viewer UI     |
 

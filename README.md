@@ -1,6 +1,6 @@
-# ESP32 Car Greeter 🚗🔊
+# ESP32-C3 Car Greeter (JQ6500 Audio)
 
-A **WiFi-enabled, event-driven audio greeting system in car** built on ESP32, that plays a personalized welcome message on car startup, configurable via 🌐 web UI with ⏱ delay control and 📤 audio upload.
+A **WiFi-enabled, event-driven audio greeting system in car** built on **ESP32-C3 + JQ6500**, that plays a personalized welcome message on car startup, configurable via 🌐 web UI with ⏱ delay control.
 
 ---
 
@@ -8,7 +8,6 @@ A **WiFi-enabled, event-driven audio greeting system in car** built on ESP32, th
 
 * 🔊 Automatic audio playback on power-up
 * 🌐 Web-based control (no app required)
-* 📤 Upload audio files via browser
 * ⏱ Configurable playback delay
 * 📊 Real-time log viewer UI
 * 🔐 Basic Authentication for security
@@ -18,9 +17,9 @@ A **WiFi-enabled, event-driven audio greeting system in car** built on ESP32, th
 
 ## 🧠 Project Overview
 
-This project uses an **ESP32 microcontroller** to:
+This project uses an **ESP32-C3 microcontroller** to:
 
-* Store an audio file in flash memory
+* Control a JQ6500 module that stores the welcome audio in its internal flash
 * Play it automatically after boot (once per power cycle)
 * Allow configuration and control via a web interface
 
@@ -37,10 +36,10 @@ This project uses an **ESP32 microcontroller** to:
 
 ## 📦 System Components
 
-* ESP32 (WiFi-enabled microcontroller)
-* I2S DAC (e.g., MAX98357A)
+* ESP32-C3 (WiFi-enabled microcontroller)
+* JQ6500 Voice Sound Module (16Mbit)
 * External speaker / AUX output
-* Internal or external flash storage
+* JQ6500 internal flash storage for the welcome track
 
 ---
 
@@ -54,7 +53,6 @@ http://<ESP32_IP>
 
 ### Features:
 
-* Upload audio file
 * Set playback delay
 * Trigger playback manually
 * View system logs
@@ -110,11 +108,8 @@ CarGreeter/
 │   ├── event_bus.cpp
 │   ├── event_bus.h
 │   │
-│   ├── audio_engine.cpp
-│   ├── audio_engine.h
-│   │
-│   ├── file_manager.cpp
-│   ├── file_manager.h
+│   ├── jq6500_player.cpp
+│   ├── jq6500_player.h
 │   │
 │   ├── config_manager.cpp
 │   ├── config_manager.h
@@ -164,7 +159,7 @@ Detailed documentation is available in `/docs`:
 ## 🧪 Usage
 
 * Open web UI
-* Upload audio file (`.wav` recommended)
+* Program the welcome audio onto the JQ6500 module (per its documentation)
 * Set delay
 * Reboot device to test auto-play
 
@@ -173,8 +168,7 @@ Detailed documentation is available in `/docs`:
 ## ⚠️ Notes
 
 * Use only on trusted local networks
-* WAV format recommended (no decoding required)
-* Avoid large files due to memory constraints
+* Audio is stored/decoded on the JQ6500 module (ESP32-C3 only controls playback)
 
 ---
 

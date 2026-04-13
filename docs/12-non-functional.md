@@ -35,7 +35,7 @@ The system must prioritize:
 ## 🔊 Audio Playback
 
 * Playback must be smooth (no glitches)
-* Continuous streaming without interruption
+* Playback control must be reliable (event → UART command)
 
 ---
 
@@ -50,8 +50,7 @@ The system must prioritize:
 
 ## Rules
 
-* Do not load entire audio file into memory
-* Use small buffers (512–1024 bytes)
+* Keep buffers small
 * Limit number of global variables
 
 ---
@@ -196,7 +195,6 @@ delay(1000);
 
 * Test under continuous operation
 * Test repeated power cycles
-* Test large file upload
 * Test edge cases (invalid input)
 
 ---

@@ -2,10 +2,9 @@
 
 ## 🎯 Project Overview
 
-The **ESP32 Audio Greeting System in Car** is a WiFi-enabled embedded system designed to:
+The **ESP32-C3 + JQ6500 Audio Greeting System in Car** is a WiFi-enabled embedded system designed to:
 
 * Play a predefined audio file(Welcome note or Greeting audio file) automatically on power-up
-* Allow users to upload audio files via a web interface
 * Provide configuration controls (e.g., playback delay)
 * Output audio to external stereo systems via AUX
 * Offer real-time logging and monitoring via a web UI
@@ -40,11 +39,10 @@ The **ESP32 Audio Greeting System in Car** is a WiFi-enabled embedded system des
 
 ---
 
-### 📤 Audio Upload
+### 📦 Audio Storage (JQ6500)
 
-* Upload audio files directly from browser
-* Replace existing audio file
-* Supports standard formats (WAV recommended)
+* Welcome audio is stored on the JQ6500 module internal flash
+* ESP32-C3 controls playback via UART commands (no audio streaming)
 
 ---
 
@@ -101,7 +99,6 @@ The **ESP32 Audio Greeting System in Car** is a WiFi-enabled embedded system des
 3. User logs in
 4. User can:
 
-   * Upload audio
    * Set delay
    * Trigger playback manually
    * View logs
@@ -112,22 +109,21 @@ The **ESP32 Audio Greeting System in Car** is a WiFi-enabled embedded system des
 
 ### 🧠 Microcontroller
 
-* ESP32 (with built-in WiFi)
+* ESP32-C3 Super Mini (HW-466AB) (with built-in WiFi)
 
 ---
 
 ### 💾 Storage
 
-* Internal SPIFFS / LittleFS OR
-* External SPI flash (optional)
+* ESP32-C3 flash: configuration storage (delay, future settings)
+* JQ6500 internal flash: welcome audio track (16Mbit / 2MB)
 
 ---
 
 ### 🔊 Audio Output
 
-* I2S interface from ESP32
-* External DAC module (e.g., MAX98357A)
-* Output via AUX (line-level)
+* UART control from ESP32-C3 → JQ6500
+* JQ6500 analog DAC outputs (DACL/DACR) to AUX (line-level)
 
 ---
 
@@ -148,10 +144,10 @@ The **ESP32 Audio Greeting System in Car** is a WiFi-enabled embedded system des
 
 ## ⚙️ Technology Stack
 
-* Arduino Framework (ESP32)
+* Arduino Framework (ESP32-C3)
 * FreeRTOS (built into ESP32)
 * Embedded Web Server
-* I2S Audio Driver
+* UART control to JQ6500
 
 ---
 

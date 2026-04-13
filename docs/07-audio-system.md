@@ -2,14 +2,18 @@
 
 ## 🔊 Audio System Overview
 
-The Audio System is responsible for **playing audio files stored on the device** and outputting them through an external audio system via **I2S → DAC → AUX**.
+The Audio System is responsible for **playing a welcome audio track using a JQ6500 voice/MP3 module**.
+
+* ESP32-C3 triggers playback via the Event Bus
+* JQ6500 plays audio from its **internal flash storage**
+* Audio output is analog via the JQ6500 DAC pins (DACL/DACR) to AUX
 
 ---
 
 # 🧠 Design Goals
 
 * Reliable playback on power-up
-* Non-blocking audio streaming
+* Non-blocking playback control
 * Low memory usage
 * Clean integration with event system
 
@@ -18,32 +22,32 @@ The Audio System is responsible for **playing audio files stored on the device**
 # 🏗️ Audio Pipeline
 
 ```text id="j3p4yk"
-Storage → File Manager → Audio Engine → I2S → DAC → AUX Output
+ESP32-C3 → UART → JQ6500 Module → DACL/DACR → AUX Output
+                 (internal flash)
 ```
 
 ---
 
 # 🔌 Hardware Components
 
-## 🧠 ESP32
+## 🧠 ESP32-C3
 
-* Provides I2S interface
-* Handles audio data streaming
+* Provides WiFi + web control + scheduling
+* Sends UART control commands to JQ6500 (no audio sample streaming)
 
 ---
 
-## 🎧 DAC (Digital-to-Analog Converter)
+## 🎧 JQ6500 Module (Decoder + DAC)
 
-Recommended:
-
-* MAX98357A (I2S DAC + amplifier)
+* Decodes audio internally
+* Produces analog audio outputs (variant-dependent)
 
 ---
 
 ## 🔊 Output
 
-* Line-level AUX output
-* Connect to external stereo system
+* AUX/line-level from JQ6500 DAC pins (DACL/DACR + GND)
+* Some boards also expose SPK+/SPK- for direct speaker drive (board-dependent)
 
 ---
 
@@ -51,26 +55,26 @@ Recommended:
 
 ## Recommended Format
 
-* WAV (PCM, 16-bit)
-* Sample Rate: 44.1kHz or 22.05kHz
+Depends on your JQ6500 module/firmware, but common choices are:
+
+* MP3 (typical)
+* WAV (on supported variants)
 
 ---
 
-## Why WAV?
+## Notes
 
-* No decoding required
-* Lightweight processing
-* Best suited for ESP32
+* ESP32-C3 does not decode audio in this design.
+* JQ6500 handles decoding and analog output.
 
 ---
 
-# ⚙️ Audio Engine Module
+# ⚙️ JQ6500 Player Module
 
 ## Responsibility
 
-* Handle playback logic
-* Stream audio data
-* Control I2S interface
+* Handle playback control logic
+* Send UART commands to the JQ6500 module
 
 ---
 
@@ -82,7 +86,7 @@ Recommended:
 
 ## Output
 
-* Audio signal via DAC
+* UART command(s) to start playback on JQ6500
 
 ---
 
@@ -91,41 +95,29 @@ Recommended:
 ```text id="d6ek0s"
 EVENT_PLAY received
       ↓
-Audio Engine starts playback
+JQ6500 Player sends UART play command
       ↓
-File Manager opens file
+JQ6500 plays audio from internal flash
       ↓
-Read chunk → send to I2S
-      ↓
-Repeat until file ends
-      ↓
-Stop playback
+Analog output (DACL/DACR) to AUX
 ```
 
 ---
 
 # 📦 Streaming Design
 
-## Chunk-Based Reading
+There is no ESP32-side audio streaming in this design.
 
-* Read small chunks (e.g., 512–1024 bytes)
-* Send to I2S buffer
-* Repeat until EOF
-
----
-
-## Why Streaming?
-
-* Avoids loading entire file into RAM
-* Ensures low memory usage
+* ESP32-C3 only sends control commands to JQ6500
+* JQ6500 reads and decodes audio from its internal storage
 
 ---
 
 # ⚡ Non-Blocking Strategy
 
-* Playback runs in separate task
-* No blocking calls in main loop
-* Uses buffers and continuous streaming
+* Playback control runs in a separate task/module
+* No blocking calls in web handlers
+* UART commands are short and event-driven
 
 ---
 
@@ -134,8 +126,8 @@ Stop playback
 ## Responsibilities
 
 * Wait for EVENT_PLAY
-* Execute playback
-* Manage I2S data flow
+* Send UART command(s) to JQ6500 to start playback
+* Optionally handle stop/volume/track selection events
 
 ---
 
@@ -145,33 +137,19 @@ Stop playback
 Wait for event
      ↓
 Start playback
-     ↓
-Stream audio
-     ↓
+      ↓
+JQ6500 plays audio
+      ↓
 End playback
 ```
 
 ---
 
-# 🔊 I2S Configuration
+# 🔌 UART Configuration (ESP32-C3 → JQ6500)
 
-## Key Parameters
-
-* Sample Rate: 44100 Hz (recommended)
-* Bits per sample: 16-bit
-* Channel: Mono or Stereo
-
----
-
-## Output Pins (Example)
-
-```text id="m8h7bx"
-BCLK → GPIO26
-LRCK → GPIO25
-DATA → GPIO22
-```
-
-(Note: Pins can be configured as needed)
+* TX (ESP32-C3) → RX (JQ6500)
+* RX (ESP32-C3) ← TX (JQ6500) (optional)
+* GND must be common
 
 ---
 
@@ -212,11 +190,9 @@ DATA → GPIO22
 
 # 🚀 Future Enhancements
 
-* MP3/AAC support
-* Volume control
-* Pause/Resume
-* Playlist support
-* Bluetooth audio
+* Track selection via UI (EVENT_PLAY_TRACK)
+* Volume control via UI (EVENT_VOLUME_CHANGE)
+* Stop/Pause/Resume (if supported by the JQ6500 command set)
 
 ---
 
@@ -224,10 +200,9 @@ DATA → GPIO22
 
 The Audio System provides:
 
-* Efficient streaming playback
-* Low memory usage
+* Simple and reliable welcome playback using JQ6500 internal storage
+* Low ESP32-C3 CPU/RAM usage (no decoding/streaming)
 * Clean integration with event-driven architecture
-* Reliable output to external audio systems
 
 ---
 
