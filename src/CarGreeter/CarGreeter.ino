@@ -9,7 +9,10 @@
 #include "event_bus.h"
 #include "jq6500_player.h"
 #include "logger.h"
+#include "network_manager.h"
 #include "scheduler.h"
+#include "system_manager.h"
+#include "time_manager.h"
 #include "web_server.h"
 
 namespace {
@@ -59,6 +62,7 @@ bool connectWifiSta(const char* ssid, const char* password) {
 
   if (WiFi.status() == WL_CONNECTED) {
     logInfo("WIFI", "Connected");
+    (void)eventBusSend(EVENT_TIME_SYNC_NTP, 0);
     return true;
   }
 
@@ -67,9 +71,14 @@ bool connectWifiSta(const char* ssid, const char* password) {
 }
 
 bool startHotspotAp() {
+  configManagerEnsureHotspotCredentials(kApSsid, kApPassword);
+  char apSsid[33];
+  char apPassword[65];
+  configManagerCopyHotspotCredentials(apSsid, sizeof(apSsid), apPassword, sizeof(apPassword));
+
   logWarn("WIFI", "Starting hotspot (AP) mode");
   WiFi.mode(WIFI_AP);
-  const bool ok = WiFi.softAP(kApSsid, kApPassword);
+  const bool ok = WiFi.softAP(apSsid, apPassword);
   if (!ok) {
     logError("WIFI", "Failed to start hotspot");
     return false;
@@ -113,8 +122,16 @@ void setup() {
 
   schedulerInit();
   (void)initNvs();
+  // Default wall clock reference at boot (IST):
+  // Jan 01 2026 11:00 AM IST == 2026-01-01 05:30:00Z.
+  timeManagerInit(1767245400ULL * 1000ULL);
+  timeManagerStartTask();
   configManagerInit();
   configManagerStartTask();
+  systemManagerInit();
+  systemManagerStartTask();
+  networkManagerInit();
+  networkManagerStartTask();
   authManagerInit("admin", "1234");
 
   const bool networkOk = ensureNetwork();
@@ -129,8 +146,8 @@ void setup() {
       .txPin = 13,
       .rxPin = -1,
       .baudRate = 9600,
-      .welcomeTrackIndex = 1,
-      .volume = 20,
+      .welcomeTrackIndex = configManagerGetEffectiveTrackIndex(),
+      .volume = configManagerGetVolume(),
   };
   jq6500PlayerInit(jqCfg);
   webServerInit();

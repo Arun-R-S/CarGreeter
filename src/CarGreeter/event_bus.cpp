@@ -4,6 +4,8 @@
 #include <freertos/queue.h>
 #include <freertos/task.h>
 
+#include <string.h>
+
 #include "logger.h"
 
 namespace {
@@ -96,7 +98,26 @@ bool eventBusSend(EventType type, int32_t value) {
   if (g_eventQueue == nullptr) {
     return false;
   }
-  const Event event{type, value};
+  const Event event{type, value, {}, {}};
+  const BaseType_t ok = xQueueSend(g_eventQueue, &event, 0);
+  if (ok != pdTRUE) {
+    logWarn("EVENT", "Queue full; event dropped");
+    return false;
+  }
+  return true;
+}
+
+bool eventBusSendText(EventType type, int32_t value, const char* text1, const char* text2) {
+  if (g_eventQueue == nullptr) {
+    return false;
+  }
+  Event event{type, value, {}, {}};
+  if (text1 != nullptr) {
+    snprintf(event.text1, sizeof(event.text1), "%s", text1);
+  }
+  if (text2 != nullptr) {
+    snprintf(event.text2, sizeof(event.text2), "%s", text2);
+  }
   const BaseType_t ok = xQueueSend(g_eventQueue, &event, 0);
   if (ok != pdTRUE) {
     logWarn("EVENT", "Queue full; event dropped");

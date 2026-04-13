@@ -2,6 +2,7 @@
 
 #include <Preferences.h>
 #include <stddef.h>
+#include <string.h>
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -16,14 +17,18 @@ constexpr char kKeySlotA[] = "cfgA";
 constexpr char kKeySlotB[] = "cfgB";
 
 constexpr uint32_t kMagic = 0x43524754u;  // 'CRGT'
-constexpr uint16_t kVersion = 2;
+constexpr uint16_t kVersion = 4;
 
 constexpr int32_t kDefaultDelaySeconds = 5;
 constexpr int32_t kDefaultVolume = 20;
 constexpr uint16_t kDefaultWelcomeTrackIndex = 1;
+constexpr uint16_t kDefaultCustomTrackIndex = 0;
 
 constexpr size_t kWifiSsidMaxLen = 32;
 constexpr size_t kWifiPasswordMaxLen = 64;
+
+constexpr size_t kApSsidMaxLen = 32;
+constexpr size_t kApPasswordMaxLen = 64;
 
 constexpr uint32_t kDebounceMs = 3000u;
 constexpr uint32_t kMinWriteIntervalMs = 30000u;
@@ -46,14 +51,56 @@ struct SettingsRecordV2 {
   uint32_t crc32;
 };
 
+struct SettingsV3 {
+  int32_t delaySeconds;
+  int32_t volume;
+  uint16_t welcomeTrackIndex;
+  uint16_t reserved;
+  char wifiSsid[kWifiSsidMaxLen + 1];
+  char wifiPassword[kWifiPasswordMaxLen + 1];
+  char hotspotSsid[kApSsidMaxLen + 1];
+  char hotspotPassword[kApPasswordMaxLen + 1];
+};
+
+struct SettingsRecordV3 {
+  uint32_t magic;
+  uint16_t version;
+  uint16_t size;
+  uint32_t seq;
+  SettingsV3 settings;
+  uint32_t crc32;
+};
+
+struct SettingsV4 {
+  int32_t delaySeconds;
+  int32_t volume;
+  uint16_t welcomeTrackIndex;
+  uint16_t customTrackIndex;
+  char wifiSsid[kWifiSsidMaxLen + 1];
+  char wifiPassword[kWifiPasswordMaxLen + 1];
+  char hotspotSsid[kApSsidMaxLen + 1];
+  char hotspotPassword[kApPasswordMaxLen + 1];
+};
+
+struct SettingsRecordV4 {
+  uint32_t magic;
+  uint16_t version;
+  uint16_t size;
+  uint32_t seq;
+  SettingsV4 settings;
+  uint32_t crc32;
+};
+
 TaskHandle_t g_task = nullptr;
 
 // NOTE: Keep initialization compatible with the Arduino ESP32 toolchain (C++11).
-SettingsV2 g_settings = {
+SettingsV4 g_settings = {
     kDefaultDelaySeconds,
     kDefaultVolume,
     kDefaultWelcomeTrackIndex,
-    0,
+    kDefaultCustomTrackIndex,
+    {0},
+    {0},
     {0},
     {0},
 };
@@ -76,7 +123,7 @@ uint32_t crc32(const uint8_t* data, size_t len) {
   return ~crc;
 }
 
-SettingsV2 clampSettings(SettingsV2 s) {
+SettingsV4 clampSettings(SettingsV4 s) {
   if (s.delaySeconds < 0) {
     s.delaySeconds = 0;
   } else if (s.delaySeconds > 3600) {
@@ -92,12 +139,85 @@ SettingsV2 clampSettings(SettingsV2 s) {
   if (s.welcomeTrackIndex == 0) {
     s.welcomeTrackIndex = kDefaultWelcomeTrackIndex;
   }
+  // 0 disables custom override.
   s.wifiSsid[kWifiSsidMaxLen] = '\0';
   s.wifiPassword[kWifiPasswordMaxLen] = '\0';
+  s.hotspotSsid[kApSsidMaxLen] = '\0';
+  s.hotspotPassword[kApPasswordMaxLen] = '\0';
   return s;
 }
 
-bool loadSlot(Preferences& prefs, const char* key, SettingsRecordV2* out) {
+SettingsV3 clampSettingsV3(SettingsV3 s) {
+  if (s.delaySeconds < 0) {
+    s.delaySeconds = 0;
+  } else if (s.delaySeconds > 3600) {
+    s.delaySeconds = 3600;
+  }
+
+  if (s.volume < 0) {
+    s.volume = 0;
+  } else if (s.volume > 30) {
+    s.volume = 30;
+  }
+
+  if (s.welcomeTrackIndex == 0) {
+    s.welcomeTrackIndex = kDefaultWelcomeTrackIndex;
+  }
+
+  s.wifiSsid[kWifiSsidMaxLen] = '\0';
+  s.wifiPassword[kWifiPasswordMaxLen] = '\0';
+  s.hotspotSsid[kApSsidMaxLen] = '\0';
+  s.hotspotPassword[kApPasswordMaxLen] = '\0';
+  return s;
+}
+
+bool loadSlotV4(Preferences& prefs, const char* key, SettingsRecordV4* out) {
+  if (out == nullptr || key == nullptr) {
+    return false;
+  }
+  const size_t len = prefs.getBytesLength(key);
+  if (len != sizeof(SettingsRecordV4)) {
+    return false;
+  }
+  const size_t n = prefs.getBytes(key, out, sizeof(SettingsRecordV4));
+  if (n != sizeof(SettingsRecordV4)) {
+    return false;
+  }
+  if (out->magic != kMagic || out->version != 4 || out->size != sizeof(SettingsV4)) {
+    return false;
+  }
+  const uint32_t expected = crc32(reinterpret_cast<const uint8_t*>(out), offsetof(SettingsRecordV4, crc32));
+  if (expected != out->crc32) {
+    return false;
+  }
+  out->settings = clampSettings(out->settings);
+  return true;
+}
+
+bool loadSlotV3(Preferences& prefs, const char* key, SettingsRecordV3* out) {
+  if (out == nullptr || key == nullptr) {
+    return false;
+  }
+  const size_t len = prefs.getBytesLength(key);
+  if (len != sizeof(SettingsRecordV3)) {
+    return false;
+  }
+  const size_t n = prefs.getBytes(key, out, sizeof(SettingsRecordV3));
+  if (n != sizeof(SettingsRecordV3)) {
+    return false;
+  }
+  if (out->magic != kMagic || out->version != 3 || out->size != sizeof(SettingsV3)) {
+    return false;
+  }
+  const uint32_t expected = crc32(reinterpret_cast<const uint8_t*>(out), offsetof(SettingsRecordV3, crc32));
+  if (expected != out->crc32) {
+    return false;
+  }
+  out->settings = clampSettingsV3(out->settings);
+  return true;
+}
+
+bool loadSlotV2(Preferences& prefs, const char* key, SettingsRecordV2* out) {
   if (out == nullptr || key == nullptr) {
     return false;
   }
@@ -109,18 +229,59 @@ bool loadSlot(Preferences& prefs, const char* key, SettingsRecordV2* out) {
   if (n != sizeof(SettingsRecordV2)) {
     return false;
   }
-  if (out->magic != kMagic || out->version != kVersion || out->size != sizeof(SettingsV2)) {
+  if (out->magic != kMagic || out->version != 2 || out->size != sizeof(SettingsV2)) {
     return false;
   }
   const uint32_t expected = crc32(reinterpret_cast<const uint8_t*>(out), offsetof(SettingsRecordV2, crc32));
   if (expected != out->crc32) {
     return false;
   }
-  out->settings = clampSettings(out->settings);
+  // Clamp V2 fields that exist.
+  if (out->settings.delaySeconds < 0) {
+    out->settings.delaySeconds = 0;
+  } else if (out->settings.delaySeconds > 3600) {
+    out->settings.delaySeconds = 3600;
+  }
+  if (out->settings.volume < 0) {
+    out->settings.volume = 0;
+  } else if (out->settings.volume > 30) {
+    out->settings.volume = 30;
+  }
+  if (out->settings.welcomeTrackIndex == 0) {
+    out->settings.welcomeTrackIndex = kDefaultWelcomeTrackIndex;
+  }
+  out->settings.wifiSsid[kWifiSsidMaxLen] = '\0';
+  out->settings.wifiPassword[kWifiPasswordMaxLen] = '\0';
   return true;
 }
 
-bool loadBestFromNvs(SettingsV2* outSettings, uint32_t* outSeq, bool* outLastSlotWasA) {
+SettingsV4 migrateFromV2(const SettingsV2& v2) {
+  SettingsV4 v4{};
+  v4.delaySeconds = v2.delaySeconds;
+  v4.volume = v2.volume;
+  v4.welcomeTrackIndex = v2.welcomeTrackIndex;
+  v4.customTrackIndex = kDefaultCustomTrackIndex;
+  snprintf(v4.wifiSsid, sizeof(v4.wifiSsid), "%s", v2.wifiSsid);
+  snprintf(v4.wifiPassword, sizeof(v4.wifiPassword), "%s", v2.wifiPassword);
+  v4.hotspotSsid[0] = '\0';
+  v4.hotspotPassword[0] = '\0';
+  return clampSettings(v4);
+}
+
+SettingsV4 migrateFromV3(const SettingsV3& v3) {
+  SettingsV4 v4{};
+  v4.delaySeconds = v3.delaySeconds;
+  v4.volume = v3.volume;
+  v4.welcomeTrackIndex = v3.welcomeTrackIndex;
+  v4.customTrackIndex = kDefaultCustomTrackIndex;
+  snprintf(v4.wifiSsid, sizeof(v4.wifiSsid), "%s", v3.wifiSsid);
+  snprintf(v4.wifiPassword, sizeof(v4.wifiPassword), "%s", v3.wifiPassword);
+  snprintf(v4.hotspotSsid, sizeof(v4.hotspotSsid), "%s", v3.hotspotSsid);
+  snprintf(v4.hotspotPassword, sizeof(v4.hotspotPassword), "%s", v3.hotspotPassword);
+  return clampSettings(v4);
+}
+
+bool loadBestFromNvs(SettingsV4* outSettings, uint32_t* outSeq, bool* outLastSlotWasA) {
   if (outSettings == nullptr || outSeq == nullptr || outLastSlotWasA == nullptr) {
     return false;
   }
@@ -135,53 +296,75 @@ bool loadBestFromNvs(SettingsV2* outSettings, uint32_t* outSeq, bool* outLastSlo
     return false;
   }
 
-  SettingsRecordV2 recA{};
-  SettingsRecordV2 recB{};
-  const bool okA = loadSlot(prefs, kKeySlotA, &recA);
-  const bool okB = loadSlot(prefs, kKeySlotB, &recB);
+  SettingsRecordV4 recA4{};
+  SettingsRecordV4 recB4{};
+  SettingsRecordV2 recA2{};
+  SettingsRecordV2 recB2{};
+  SettingsRecordV3 recA3{};
+  SettingsRecordV3 recB3{};
+
+  const bool okA4 = loadSlotV4(prefs, kKeySlotA, &recA4);
+  const bool okB4 = loadSlotV4(prefs, kKeySlotB, &recB4);
+
+  const bool okA3 = okA4 ? false : loadSlotV3(prefs, kKeySlotA, &recA3);
+  const bool okB3 = okB4 ? false : loadSlotV3(prefs, kKeySlotB, &recB3);
+
+  const bool okA = okA4 ? true : (okA3 ? true : loadSlotV2(prefs, kKeySlotA, &recA2));
+  const bool okB = okB4 ? true : (okB3 ? true : loadSlotV2(prefs, kKeySlotB, &recB2));
   prefs.end();
 
   if (!okA && !okB) {
     return false;
   }
 
-  if (okA && (!okB || recA.seq >= recB.seq)) {
-    *outSettings = recA.settings;
-    *outSeq = recA.seq;
+  const uint32_t seqA = okA4 ? recA4.seq : (okA3 ? recA3.seq : recA2.seq);
+  const uint32_t seqB = okB4 ? recB4.seq : (okB3 ? recB3.seq : recB2.seq);
+
+  if (okA && (!okB || seqA >= seqB)) {
+    *outSettings = okA4 ? recA4.settings : (okA3 ? migrateFromV3(recA3.settings) : migrateFromV2(recA2.settings));
+    *outSeq = seqA;
     *outLastSlotWasA = true;
     return true;
   }
 
-  *outSettings = recB.settings;
-  *outSeq = recB.seq;
+  *outSettings = okB4 ? recB4.settings : (okB3 ? migrateFromV3(recB3.settings) : migrateFromV2(recB2.settings));
+  *outSeq = seqB;
   *outLastSlotWasA = false;
   return true;
 }
 
-bool saveToNvsSlot(const SettingsV2& settings, uint32_t seq, bool slotA) {
+bool saveToNvsSlot(const SettingsV4& settings, uint32_t seq, bool slotA) {
   Preferences prefs;
   if (!prefs.begin(kPrefsNamespace, false)) {
     logWarn("CONF", "NVS begin failed");
     return false;
   }
 
-  SettingsRecordV2 rec{};
+  SettingsRecordV4 rec{};
   rec.magic = kMagic;
   rec.version = kVersion;
-  rec.size = sizeof(SettingsV2);
+  rec.size = sizeof(SettingsV4);
   rec.seq = seq;
   rec.settings = clampSettings(settings);
-  rec.crc32 = crc32(reinterpret_cast<const uint8_t*>(&rec), offsetof(SettingsRecordV2, crc32));
+  rec.crc32 = crc32(reinterpret_cast<const uint8_t*>(&rec), offsetof(SettingsRecordV4, crc32));
 
   const char* key = slotA ? kKeySlotA : kKeySlotB;
-  const size_t written = prefs.putBytes(key, &rec, sizeof(SettingsRecordV2));
+  const size_t written = prefs.putBytes(key, &rec, sizeof(SettingsRecordV4));
   prefs.end();
-  return written == sizeof(SettingsRecordV2);
+  return written == sizeof(SettingsRecordV4);
 }
 
 void scheduleSave() {
   g_dirty = true;
   g_lastChangeMs = millis();
+  if (g_task != nullptr) {
+    xTaskNotifyGive(g_task);
+  }
+}
+
+void scheduleSaveImmediate() {
+  g_dirty = true;
+  g_lastChangeMs = millis() - kDebounceMs;
   if (g_task != nullptr) {
     xTaskNotifyGive(g_task);
   }
@@ -204,6 +387,96 @@ void onSetDelay(const Event& event, void*) {
   char buffer[64];
   snprintf(buffer, sizeof(buffer), "Delay updated to %ld seconds", v);
   logDebug("CONF", buffer);
+}
+
+void onWifiSet(const Event& event, void*) {
+  if (event.text1[0] == '\0' || event.text2[0] == '\0') {
+    logWarn("CONF", "WiFi credentials empty; ignoring");
+    return;
+  }
+  if (strncmp(g_settings.wifiSsid, event.text1, sizeof(g_settings.wifiSsid)) == 0 &&
+      strncmp(g_settings.wifiPassword, event.text2, sizeof(g_settings.wifiPassword)) == 0) {
+    return;
+  }
+  snprintf(g_settings.wifiSsid, sizeof(g_settings.wifiSsid), "%s", event.text1);
+  snprintf(g_settings.wifiPassword, sizeof(g_settings.wifiPassword), "%s", event.text2);
+  scheduleSaveImmediate();
+  logInfo("CONF", "WiFi credentials updated");
+}
+
+void onWifiForget(const Event&, void*) {
+  if (g_settings.wifiSsid[0] == '\0' && g_settings.wifiPassword[0] == '\0') {
+    return;
+  }
+  g_settings.wifiSsid[0] = '\0';
+  g_settings.wifiPassword[0] = '\0';
+  scheduleSaveImmediate();
+  logInfo("CONF", "WiFi credentials cleared");
+}
+
+void onHotspotSet(const Event& event, void*) {
+  if (event.text1[0] == '\0' || event.text2[0] == '\0') {
+    logWarn("CONF", "Hotspot credentials empty; ignoring");
+    return;
+  }
+  if (strncmp(g_settings.hotspotSsid, event.text1, sizeof(g_settings.hotspotSsid)) == 0 &&
+      strncmp(g_settings.hotspotPassword, event.text2, sizeof(g_settings.hotspotPassword)) == 0) {
+    return;
+  }
+  snprintf(g_settings.hotspotSsid, sizeof(g_settings.hotspotSsid), "%s", event.text1);
+  snprintf(g_settings.hotspotPassword, sizeof(g_settings.hotspotPassword), "%s", event.text2);
+  scheduleSaveImmediate();
+  logInfo("CONF", "Hotspot credentials updated");
+}
+
+void onAudioSetPreloaded(const Event& event, void*) {
+  int32_t v = event.value;
+  if (v < 1) {
+    v = 1;
+  }
+  if (v > 9999) {
+    v = 9999;
+  }
+  const uint16_t idx = static_cast<uint16_t>(v);
+  if (idx == g_settings.welcomeTrackIndex) {
+    return;
+  }
+  g_settings.welcomeTrackIndex = idx;
+  scheduleSave();
+  logInfo("CONF", "Preloaded audio index updated");
+}
+
+void onAudioSetCustom(const Event& event, void*) {
+  int32_t v = event.value;
+  if (v < 0) {
+    v = 0;
+  }
+  if (v > 9999) {
+    v = 9999;
+  }
+  const uint16_t idx = static_cast<uint16_t>(v);
+  if (idx == g_settings.customTrackIndex) {
+    return;
+  }
+  g_settings.customTrackIndex = idx;
+  scheduleSave();
+  logInfo("CONF", "Custom audio index updated");
+}
+
+void onVolumeChange(const Event& event, void*) {
+  int32_t v = event.value;
+  if (v < 0) {
+    v = 0;
+  }
+  if (v > 30) {
+    v = 30;
+  }
+  if (v == g_settings.volume) {
+    return;
+  }
+  g_settings.volume = v;
+  scheduleSave();
+  logInfo("CONF", "Volume updated");
 }
 
 void configTask(void*) {
@@ -242,8 +515,14 @@ void configTask(void*) {
 
 void configManagerInit() {
   (void)eventBusRegisterHandler(EVENT_SET_DELAY, onSetDelay, nullptr);
+  (void)eventBusRegisterHandler(EVENT_WIFI_SET, onWifiSet, nullptr);
+  (void)eventBusRegisterHandler(EVENT_WIFI_FORGET, onWifiForget, nullptr);
+  (void)eventBusRegisterHandler(EVENT_HOTSPOT_SET, onHotspotSet, nullptr);
+  (void)eventBusRegisterHandler(EVENT_AUDIO_SET_PRELOADED, onAudioSetPreloaded, nullptr);
+  (void)eventBusRegisterHandler(EVENT_AUDIO_SET_CUSTOM, onAudioSetCustom, nullptr);
+  (void)eventBusRegisterHandler(EVENT_VOLUME_CHANGE, onVolumeChange, nullptr);
 
-  SettingsV2 loaded{};
+  SettingsV4 loaded{};
   uint32_t loadedSeq = 0;
   bool lastWasA = true;
   if (loadBestFromNvs(&loaded, &loadedSeq, &lastWasA)) {
@@ -261,6 +540,9 @@ void configManagerInit() {
   }
 
   (void)eventBusSend(EVENT_SET_DELAY, g_settings.delaySeconds);
+  (void)eventBusSend(EVENT_VOLUME_CHANGE, g_settings.volume);
+  (void)eventBusSend(EVENT_AUDIO_SET_PRELOADED, g_settings.welcomeTrackIndex);
+  (void)eventBusSend(EVENT_AUDIO_SET_CUSTOM, g_settings.customTrackIndex);
 }
 
 void configManagerStartTask(UBaseType_t priority, uint32_t stackWords) {
@@ -288,4 +570,81 @@ void configManagerCopyWifiCredentials(char* ssidOut,
   if (passwordOut != nullptr && passwordOutSize > 0) {
     snprintf(passwordOut, passwordOutSize, "%s", g_settings.wifiPassword);
   }
+}
+
+bool configManagerHasHotspotCredentials() {
+  return g_settings.hotspotSsid[0] != '\0' && g_settings.hotspotPassword[0] != '\0';
+}
+
+void configManagerCopyHotspotCredentials(char* ssidOut,
+                                         size_t ssidOutSize,
+                                         char* passwordOut,
+                                         size_t passwordOutSize) {
+  if (ssidOut != nullptr && ssidOutSize > 0) {
+    snprintf(ssidOut, ssidOutSize, "%s", g_settings.hotspotSsid);
+  }
+  if (passwordOut != nullptr && passwordOutSize > 0) {
+    snprintf(passwordOut, passwordOutSize, "%s", g_settings.hotspotPassword);
+  }
+}
+
+void configManagerEnsureHotspotCredentials(const char* defaultSsid, const char* defaultPassword) {
+  if (configManagerHasHotspotCredentials()) {
+    return;
+  }
+  if (defaultSsid == nullptr || defaultPassword == nullptr || defaultSsid[0] == '\0' || defaultPassword[0] == '\0') {
+    logWarn("CONF", "Default hotspot credentials missing");
+    return;
+  }
+  snprintf(g_settings.hotspotSsid, sizeof(g_settings.hotspotSsid), "%s", defaultSsid);
+  snprintf(g_settings.hotspotPassword, sizeof(g_settings.hotspotPassword), "%s", defaultPassword);
+  scheduleSaveImmediate();
+  logInfo("CONF", "Hotspot defaults applied");
+}
+
+int32_t configManagerGetDelaySeconds() { return g_settings.delaySeconds; }
+int32_t configManagerGetVolume() { return g_settings.volume; }
+uint16_t configManagerGetPreloadedTrackIndex() { return g_settings.welcomeTrackIndex; }
+uint16_t configManagerGetCustomTrackIndex() { return g_settings.customTrackIndex; }
+uint16_t configManagerGetEffectiveTrackIndex() {
+  return (g_settings.customTrackIndex != 0) ? g_settings.customTrackIndex : g_settings.welcomeTrackIndex;
+}
+
+void configManagerCopyWifiSsid(char* out, size_t outSize) {
+  if (out == nullptr || outSize == 0) {
+    return;
+  }
+  snprintf(out, outSize, "%s", g_settings.wifiSsid);
+}
+
+void configManagerCopyHotspotSsid(char* out, size_t outSize) {
+  if (out == nullptr || outSize == 0) {
+    return;
+  }
+  snprintf(out, outSize, "%s", g_settings.hotspotSsid);
+}
+
+void configManagerFactoryReset() {
+  Preferences prefs;
+  if (prefs.begin(kPrefsNamespace, false)) {
+    (void)prefs.clear();
+    prefs.end();
+  }
+
+  g_settings = SettingsV4{
+      kDefaultDelaySeconds,
+      kDefaultVolume,
+      kDefaultWelcomeTrackIndex,
+      kDefaultCustomTrackIndex,
+      {0},
+      {0},
+      {0},
+      {0},
+  };
+  g_seq = 0;
+  g_lastSlotWasA = true;
+  g_dirty = false;
+  g_lastChangeMs = 0;
+  g_lastSaveMs = 0;
+  logWarn("CONF", "Factory reset done");
 }
