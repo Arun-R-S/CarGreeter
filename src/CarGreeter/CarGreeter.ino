@@ -111,8 +111,10 @@ void setup() {
       // IMPORTANT:
       // - Avoid UART1 defaults (GPIO9/10 are SPI flash pins on many ESP32 variants).
       // - Avoid GPIO16/17 on ESP32-WROVER/ESP32-CAM builds that use PSRAM (these pins are commonly wired to PSRAM).
+      // - On many ESP32-CAM (AI Thinker style) boards, GPIO4 drives the bright flash LED.
+      //   Using it for UART TX will keep the LED on; prefer an SD pin (GPIO13/14) if SD is unused.
       // - TX-only wiring is enough for basic playback control: ESP32 TX -> JQ6500 RX; leave JQ6500 TX unconnected.
-      .txPin = 4,
+      .txPin = 13,
       .rxPin = -1,
       .baudRate = 9600,
       .welcomeTrackIndex = 1,

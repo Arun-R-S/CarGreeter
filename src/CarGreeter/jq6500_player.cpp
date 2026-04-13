@@ -93,6 +93,9 @@ void jq6500PlayerInit(const Jq6500Config& config) {
   if (g_cfg.txPin == 9 || g_cfg.txPin == 10) {
     logWarn("JQ6500", "TX pin 9/10 may conflict with SPI flash on some ESP32 modules");
   }
+  if (g_cfg.txPin == 4) {
+    logWarn("JQ6500", "TX pin 4 may drive the ESP32-CAM flash LED on some boards");
+  }
 
   // IMPORTANT (classic ESP32/ESP32-CAM):
   // - UART1 defaults to GPIO9/10 which are tied to SPI flash.
