@@ -365,11 +365,11 @@ void handleSystemInfo() {
   }
 
   // === MEMORY INFO ===
-  const uint32_t heapFree = esp_get_free_heap_size();
-  const uint32_t heapMax = 320 * 1024;
-  const uint32_t heapUsed = heapMax - heapFree;
-  const uint32_t heapPercent = (heapUsed * 100) / heapMax;
-  const uint32_t minHeapFree = esp_get_minimum_free_heap_size();
+  const uint32_t heapFree = ESP.getFreeHeap();
+  const uint32_t heapMax = ESP.getHeapSize();
+  const uint32_t heapUsed = (heapMax > heapFree) ? (heapMax - heapFree) : 0;
+  const uint32_t heapPercent = (heapMax > 0) ? ((heapUsed * 100) / heapMax) : 0;
+  const uint32_t minHeapFree = ESP.getMinFreeHeap();
 
   // === FLASH INFO ===
   uint32_t flashSize = 0;
@@ -463,7 +463,7 @@ void handleSystemInfo() {
            static_cast<unsigned long>(heapUsed),
            static_cast<unsigned>(heapPercent),
            static_cast<unsigned long>(minHeapFree),
-           static_cast<unsigned long>(flashSizeKB),
+           static_cast<unsigned long>(flashSize),
            wifiMode,
            connected ? "true" : "false",
            static_cast<long>(rssi),
