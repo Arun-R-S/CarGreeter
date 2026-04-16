@@ -165,68 +165,6 @@ When adding new features:
 
 * Add new events (do NOT modify existing flow)
 * Extend modules instead of modifying core logic
-* Update documentation in `/docs`
-
----
-
-# Folder Structure
-
-CarGreeter/
-│
-├── AGENT.md                 ← ⭐ PRIMARY FILE (entry point for agent)
-├── README.md                ← Human-friendly overview
-│
-├── /docs                    ← All detailed specifications
-│   │
-│   ├── 01-overview.md
-│   ├── 02-architecture.md
-│   ├── 03-modules.md
-│   ├── 04-event-system.md
-│   ├── 05-web-ui.md
-│   ├── 06-authentication.md
-│   ├── 07-audio-system.md
-│   ├── 08-logging.md
-│   ├── 09-storage.md
-│   ├── 10-scheduler.md
-│   ├── 11-api-spec.md
-│   ├── 12-non-functional.md
-│   ├── 13-future-enhancements.md
-│   ├── 14-build-deployment.md
-│
-├── /src                     ← Arduino source files
-│   │
-│   ├── CarGreeter.ino
-│   │
-│   ├── web_server.cpp
-│   ├── web_server.h
-│   │
-│   ├── web_pages.h          ← Embedded UI (Tasmota-style)
-│   │
-│   ├── auth_manager.cpp
-│   ├── auth_manager.h
-│   │
-│   ├── event_bus.cpp
-│   ├── event_bus.h
-│   │
-│   ├── jq6500_player.cpp
-│   ├── jq6500_player.h
-│   │
-│   ├── config_manager.cpp
-│   ├── config_manager.h
-│   │
-│   ├── scheduler.cpp
-│   ├── scheduler.h
-│   │
-│   ├── logger.cpp
-│   ├── logger.h
-│
-└── .gitignore
-
----
-
-# 🏁 Final Note
-
-This system is designed for:
 
 * Stability
 * Scalability

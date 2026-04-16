@@ -63,6 +63,18 @@ Module → Logger API → Log Queue → Logger Task → Output (Serial + Web)
 
 ---
 
+# 📂 Structural Organization
+
+The project is split into two logical domains located in the `src/` folder:
+
+### 1. Core Framework (`/src/core`)
+Reusable, hardware-agnostic modules (Event Bus, Logger, Auth, etc.) that can be ported to any ESP32 project.
+
+### 2. Application Logic (`/src/app`)
+Project-specific features (JQ6500 driver, Scheduler, CarGreeter settings) that build upon the Core.
+
+---
+
 # 🧩 Architectural Layers
 
 ## 1. Presentation Layer

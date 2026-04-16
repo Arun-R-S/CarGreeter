@@ -431,6 +431,16 @@ Time Manager → System time functions
 
 ---
 
+## 📂 Project Structure
+
+```text
+/src/CarGreeter/
+├── CarGreeter.ino       (Main Entry)
+└── /src/                (Source Root)
+    ├── /core/           (Reusable Framework)
+    └── /app/            (CarGreeter Logic)
+```
+
 # 🚀 Extension Strategy
 
 To add a new feature:
