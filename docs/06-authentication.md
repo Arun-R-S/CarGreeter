@@ -51,7 +51,8 @@ server.authenticate(username, password)
 ## Example
 
 ```cpp id="c6xk3c"
-if (!server.authenticate("admin", "1234")) {
+// Values are retrieved from ConfigManager globally
+if (!server.authenticate(g_username, g_password)) {
     return server.requestAuthentication();
 }
 ```
@@ -97,6 +98,7 @@ All sensitive endpoints MUST be protected with Basic Authentication.
 | `/api/audio`        | Configure audio settings       |
 | `/api/restart`      | Restart device                 |
 | `/api/factory_reset`| Factory reset device           |
+| `/api/auth`         | Update admin credentials       |
 | `/api/time/sync`    | Synchronize device time        |
 
 ---
@@ -136,12 +138,10 @@ if (!checkAuth(server)) return;
 
 ## Current Approach
 
-* Hardcoded username/password
-
-```text id="gq6e3b"
-Username: admin
-Password: 1234
-```
+* Persistent storage in NVS (Config Manager SettingsV5)
+* Initial default: admin / 1234
+* Changeable via Web UI
+* Included in backup/restore files
 
 ---
 
@@ -180,6 +180,7 @@ Password: 1234
 
 * Use only on trusted local networks
 * Avoid public WiFi usage
+* **Change default credentials (admin/1234) immediately**
 
 ---
 

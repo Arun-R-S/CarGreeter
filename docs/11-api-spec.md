@@ -57,6 +57,7 @@ HTTP 401 Unauthorized
 | GET    | `/api/sysinfo`        | Get system information   |
 | GET    | `/api/backup`         | Download settings backup |
 | POST   | `/api/restore`        | Restore settings         |
+| POST   | `/api/auth`           | Set admin credentials    |
 
 ## WiFi Management
 
@@ -307,7 +308,8 @@ Returns current system settings as JSON.
   "preloadedIndex": 0,
   "customIndex": 1,
   "wifiSsid": "MyWiFi",
-  "apSsid": "CarGreeter-AP"
+  "apSsid": "CarGreeter-AP",
+  "adminUsername": "admin"
 }
 ```
 
@@ -406,6 +408,8 @@ wifiSsid=MyWiFi
 wifiPassword=MyPassword123
 apSsid=CarGreeter-AP
 apPassword=APPassword456
+adminUsername=admin
+adminPassword=1234
 ```
 
 ---
@@ -442,6 +446,8 @@ wifiSsid=<string>
 wifiPassword=<string>
 apSsid=<string>
 apPassword=<string>
+adminUsername=<string>
+adminPassword=<string>
 ```
 
 ---
@@ -696,9 +702,41 @@ Factory reset initiated
 
 ## Notes
 
-* Clears all WiFi, hotspot, and audio settings
-* Device restarts with default configuration
 * Use with caution
+
+---
+
+# 🔐 18. POST `/api/auth`
+
+## Description
+
+Sets the administrative credentials for the Web UI.
+
+---
+
+## Request Parameters
+
+| Param      | Type   | Description         |
+| ---------- | ------ | ------------------- |
+| `username` | string | New admin username  |
+| `password` | string | New admin password  |
+
+---
+
+## Response
+
+```
+200 OK
+Auth saved; restarting...
+```
+
+---
+
+## Notes
+
+* Requires device restart to apply
+* Replaces previous credentials in NVS
+* Changes the Basic Authentication requirements immediately after restart
 
 ---
 
