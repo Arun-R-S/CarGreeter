@@ -10,6 +10,7 @@
 #include "../core/event_bus.h"
 #include "../core/logger.h"
 #include "../core/system_manager.h"
+#include "../build_config.h"
 
 namespace {
 
@@ -630,6 +631,18 @@ void configTask(void*) {
   }
 }
 
+void resetToDefaults(SettingsV5& s) {
+  memset(&s, 0, sizeof(SettingsV5));
+  snprintf(s.hotspotSsid, sizeof(s.hotspotSsid), "%s", DEFAULT_HOTSPOT_SSID);
+  snprintf(s.hotspotPassword, sizeof(s.hotspotPassword), "%s", DEFAULT_HOTSPOT_PASS);
+  snprintf(s.adminUsername, sizeof(s.adminUsername), "%s", DEFAULT_ADMIN_USER);
+  snprintf(s.adminPassword, sizeof(s.adminPassword), "%s", DEFAULT_ADMIN_PASS);
+  s.delaySeconds = DEFAULT_DELAY_SECONDS;
+  s.volume = DEFAULT_VOLUME;
+  s.welcomeTrackIndex = DEFAULT_WELCOME_TRACK;
+  s.customTrackIndex = 0;
+}
+
 }  // namespace
 
 void configManagerInit() {
@@ -652,7 +665,7 @@ void configManagerInit() {
     g_lastSlotWasA = lastWasA;
     logInfo("CONF", "Settings loaded");
   } else {
-    g_settings = clampSettings(g_settings);
+    resetToDefaults(g_settings);
     g_seq = 0;
     g_lastSlotWasA = true;
     logWarn("CONF", "No valid settings; using defaults");
