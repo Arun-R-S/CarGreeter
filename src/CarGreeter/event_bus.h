@@ -19,6 +19,7 @@ enum EventType : uint8_t {
   EVENT_WIFI_SCAN = 12,
   EVENT_TIME_SYNC = 13,
   EVENT_TIME_SYNC_NTP = 14,
+  EVENT_AUTH_SET = 15,
   EVENT_MAX
 };
 

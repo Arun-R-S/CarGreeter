@@ -159,6 +159,26 @@ static const char kIndexHtml[] PROGMEM = R"rawliteral(
       </section>
 
       <section class="card">
+        <div class="title"><h2>Admin Credentials</h2><span class="muted">Basic Auth security</span></div>
+        <div class="two">
+          <div>
+            <label>Admin username</label>
+            <input id="adminUser" maxlength="32" placeholder="admin"/>
+          </div>
+          <div>
+            <label>Admin password (min 1)</label>
+            <input id="adminPassword" type="password" maxlength="64" placeholder="********"/>
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button class="success" onclick="saveAuth()">Save & restart</button>
+        </div>
+        <p class="muted">Used for Web UI login. Password is not shown here.</p>
+      </section>
+
+      
+    </div>
+    <section class="card">
         <div class="title"><h2>WiFi (STA)</h2><span class="muted">connect using saved credentials</span></div>
         <div class="muted" id="wifiStatus">Status: …</div>
         <div class="row">
@@ -181,7 +201,7 @@ static const char kIndexHtml[] PROGMEM = R"rawliteral(
         </div>
         <p class="muted">If WiFi isn’t configured, device will always start the hotspot.</p>
       </section>
-    </div>
+      
 
     <section class="card">
       <div class="title"><h2>System</h2><span class="muted">maintenance</span></div>
@@ -220,6 +240,7 @@ static const char kIndexHtml[] PROGMEM = R"rawliteral(
       document.getElementById('preloaded').value = String(s.preloadedIndex);
       document.getElementById('custom').value = String(s.customIndex);
       document.getElementById('apSsid').value = s.apSsid || '';
+      document.getElementById('adminUser').value = s.adminUsername || 'admin';
       document.getElementById('netMode').textContent = 'Mode: ' + (s.mode || '…');
       document.getElementById('netIp').textContent = 'IP: ' + (s.ip || '…');
       document.getElementById('audioHint').textContent = 'Effective track: ' + s.effectiveIndex;
@@ -243,6 +264,12 @@ static const char kIndexHtml[] PROGMEM = R"rawliteral(
       const ssid = document.getElementById('apSsid').value || '';
       const pass = document.getElementById('apPassword').value || '';
       toast(await apiPost('/api/hotspot', 'ssid=' + encodeURIComponent(ssid) + '&password=' + encodeURIComponent(pass)));
+    }
+    async function saveAuth(){
+      const user = document.getElementById('adminUser').value || '';
+      const pass = document.getElementById('adminPassword').value || '';
+      if(!user || !pass){ toast('Username and password are required'); return; }
+      toast(await apiPost('/api/auth', 'username=' + encodeURIComponent(user) + '&password=' + encodeURIComponent(pass)));
     }
     function rssiBars(rssi){
       if(rssi > -55) return 'Excellent';

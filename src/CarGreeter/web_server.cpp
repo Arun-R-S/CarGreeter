@@ -77,18 +77,22 @@ void handleSettings() {
   configManagerCopyWifiSsid(wifiSsid, sizeof(wifiSsid));
   configManagerCopyHotspotSsid(apSsid, sizeof(apSsid));
 
+  char adminUser[33];
+  configManagerCopyAdminCredentials(adminUser, sizeof(adminUser), nullptr, 0);
+
   const char* mode = (WiFi.getMode() == WIFI_AP) ? "AP" : "STA";
 
-  char json[720];
+  char json[1024];
   snprintf(json, sizeof(json),
            "{\"delaySeconds\":%ld,\"volume\":%ld,\"preloadedIndex\":%u,\"customIndex\":%u,"
            "\"effectiveIndex\":%u,\"wifiConfigured\":%s,\"wifiSsid\":\"%s\",\"apSsid\":\"%s\","
+           "\"adminUsername\":\"%s\","
            "\"mode\":\"%s\",\"ip\":\"%s\",\"connected\":%s,\"connectedSsid\":\"%s\",\"rssi\":%ld}",
            static_cast<long>(configManagerGetDelaySeconds()), static_cast<long>(configManagerGetVolume()),
            static_cast<unsigned>(configManagerGetPreloadedTrackIndex()),
            static_cast<unsigned>(configManagerGetCustomTrackIndex()),
            static_cast<unsigned>(configManagerGetEffectiveTrackIndex()),
-           configManagerHasWifiCredentials() ? "true" : "false", wifiSsid, apSsid, mode, ipBuf,
+           configManagerHasWifiCredentials() ? "true" : "false", wifiSsid, apSsid, adminUser, mode, ipBuf,
            connected ? "true" : "false", connectedSsid.c_str(), static_cast<long>(rssi));
   g_server.send(200, "application/json", json);
 }
@@ -146,6 +150,25 @@ void handleHotspotSet() {
   g_server.send(200, "text/plain", "Hotspot saved; restarting...");
 }
 
+void handleAuthSet() {
+  if (!authManagerEnsure(g_server)) {
+    return;
+  }
+  if (!g_server.hasArg("username") || !g_server.hasArg("password")) {
+    g_server.send(400, "text/plain", "Missing username/password");
+    return;
+  }
+  const String user = g_server.arg("username");
+  const String pass = g_server.arg("password");
+  if (user.length() < 1 || pass.length() < 1) {
+    g_server.send(400, "text/plain", "Username/Password cannot be empty");
+    return;
+  }
+  (void)eventBusSendText(EVENT_AUTH_SET, 0, user.c_str(), pass.c_str());
+  (void)eventBusSend(EVENT_SYSTEM_RESTART, 1500);
+  g_server.send(200, "text/plain", "Auth saved; restarting...");
+}
+
 void handleAudioSet() {
   if (!authManagerEnsure(g_server)) {
     return;
@@ -194,16 +217,19 @@ void handleBackup() {
   char wifiPass[65];
   char apSsid[33];
   char apPass[65];
+  char adminUser[33];
+  char adminPass[65];
   configManagerCopyWifiCredentials(wifiSsid, sizeof(wifiSsid), wifiPass, sizeof(wifiPass));
   configManagerCopyHotspotCredentials(apSsid, sizeof(apSsid), apPass, sizeof(apPass));
+  configManagerCopyAdminCredentials(adminUser, sizeof(adminUser), adminPass, sizeof(adminPass));
 
-  char out[1024];
+  char out[1200];
   snprintf(out, sizeof(out),
-           "delaySeconds=%ld\nvolume=%ld\npreloadedIndex=%u\ncustomIndex=%u\nwifiSsid=%s\nwifiPassword=%s\napSsid=%s\napPassword=%s",
+           "delaySeconds=%ld\nvolume=%ld\npreloadedIndex=%u\ncustomIndex=%u\nwifiSsid=%s\nwifiPassword=%s\napSsid=%s\napPassword=%s\nadminUsername=%s\nadminPassword=%s",
            static_cast<long>(configManagerGetDelaySeconds()), static_cast<long>(configManagerGetVolume()),
            static_cast<unsigned>(configManagerGetPreloadedTrackIndex()),
            static_cast<unsigned>(configManagerGetCustomTrackIndex()),
-           wifiSsid, wifiPass, apSsid, apPass);
+           wifiSsid, wifiPass, apSsid, apPass, adminUser, adminPass);
 
   g_server.send(200, "text/plain", out);
 }
@@ -227,6 +253,8 @@ void handleRestore() {
   String wifiPassword;
   String apSsid;
   String apPassword;
+  String adminUser;
+  String adminPassword;
 
   int pos = 0;
   while (pos < body.length()) {
@@ -255,6 +283,10 @@ void handleRestore() {
         apSsid = val;
       } else if (key == "apPassword") {
         apPassword = val;
+      } else if (key == "adminUsername") {
+        adminUser = val;
+      } else if (key == "adminPassword") {
+        adminPassword = val;
       }
     }
     pos = end + 1;
@@ -277,6 +309,9 @@ void handleRestore() {
   }
   if (apSsid.length() > 0 && apPassword.length() > 0) {
     (void)eventBusSendText(EVENT_HOTSPOT_SET, 0, apSsid.c_str(), apPassword.c_str());
+  }
+  if (adminUser.length() > 0 && adminPassword.length() > 0) {
+    (void)eventBusSendText(EVENT_AUTH_SET, 0, adminUser.c_str(), adminPassword.c_str());
   }
 
   (void)eventBusSend(EVENT_SYSTEM_RESTART, 1500);
@@ -486,6 +521,7 @@ void webServerInit() {
   g_server.on("/api/wifi/connect", HTTP_POST, handleWifiConnect);
   g_server.on("/api/wifi/forget", HTTP_POST, handleWifiForget);
   g_server.on("/api/hotspot", HTTP_POST, handleHotspotSet);
+  g_server.on("/api/auth", HTTP_POST, handleAuthSet);
   g_server.on("/api/audio", HTTP_POST, handleAudioSet);
   g_server.on("/api/restart", HTTP_POST, handleRestart);
   g_server.on("/api/factory_reset", HTTP_POST, handleFactoryReset);

@@ -22,4 +22,6 @@ uint16_t configManagerGetCustomTrackIndex();
 uint16_t configManagerGetEffectiveTrackIndex();
 void configManagerCopyWifiSsid(char* out, size_t outSize);
 void configManagerCopyHotspotSsid(char* out, size_t outSize);
+void configManagerCopyAdminCredentials(char* usernameOut, size_t usernameOutSize, char* passwordOut, size_t passwordOutSize);
+void configManagerEnsureAdminCredentials(const char* defaultUsername, const char* defaultPassword);
 void configManagerFactoryReset();

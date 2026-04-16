@@ -21,6 +21,9 @@ constexpr const char* kApSsid = "CarGreeter";
 // Minimum 8 chars for WPA2. Change this.
 constexpr const char* kApPassword = "car12345";
 
+constexpr const char* kDefaultAdminUser = "admin";
+constexpr const char* kDefaultAdminPass = "1234";
+
 bool initNvs() {
   esp_err_t err = nvs_flash_init();
   if (err == ESP_OK) {
@@ -147,11 +150,15 @@ void setup() {
   jq6500PlayerStartTask();
   schedulerStartTask();
 
-  systemManagerInit();
   systemManagerStartTask();
   networkManagerInit();
   networkManagerStartTask();
-  authManagerInit("admin", "1234");
+
+  configManagerEnsureAdminCredentials(kDefaultAdminUser, kDefaultAdminPass);
+  char adminUser[33];
+  char adminPass[65];
+  configManagerCopyAdminCredentials(adminUser, sizeof(adminUser), adminPass, sizeof(adminPass));
+  authManagerInit(adminUser, adminPass);
 
   webServerInit();
 
