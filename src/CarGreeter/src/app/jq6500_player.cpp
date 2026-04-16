@@ -3,8 +3,8 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
-#include "event_bus.h"
-#include "logger.h"
+#include "../core/event_bus.h"
+#include "../core/logger.h"
 
 namespace {
 

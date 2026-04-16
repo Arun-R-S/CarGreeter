@@ -6,7 +6,6 @@
 
 #include <esp_system.h>
 
-#include "config_manager.h"
 #include "event_bus.h"
 #include "logger.h"
 
@@ -46,8 +45,7 @@ void taskFn(void*) {
     }
 
     if (cmd.type == EVENT_SYSTEM_FACTORY_RESET) {
-      logWarn("SYS", "Factory reset requested");
-      configManagerFactoryReset();
+      logWarn("SYS", "Factory reset in progress (settings module will clear data)");
     } else if (cmd.type == EVENT_SYSTEM_RESTART) {
       logWarn("SYS", "Restart requested");
     } else {
