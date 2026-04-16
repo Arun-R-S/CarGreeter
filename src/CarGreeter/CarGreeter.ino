@@ -151,6 +151,7 @@ void setup() {
   jq6500PlayerStartTask();
   schedulerStartTask();
 
+  systemManagerInit();
   systemManagerStartTask();
   networkManagerInit();
   networkManagerStartTask();
