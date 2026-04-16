@@ -7,8 +7,8 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
-#include "event_bus.h"
-#include "logger.h"
+#include "../core/event_bus.h"
+#include "../core/logger.h"
 
 namespace {
 
@@ -593,6 +593,10 @@ void onAuthSet(const Event& event, void*) {
   logInfo("CONF", "Admin credentials updated");
 }
 
+void onFactoryResetEvent(const Event&, void*) {
+  configManagerFactoryReset();
+}
+
 void configTask(void*) {
   for (;;) {
     (void)ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(500));
@@ -636,6 +640,7 @@ void configManagerInit() {
   (void)eventBusRegisterHandler(EVENT_AUDIO_SET_CUSTOM, onAudioSetCustom, nullptr);
   (void)eventBusRegisterHandler(EVENT_VOLUME_CHANGE, onVolumeChange, nullptr);
   (void)eventBusRegisterHandler(EVENT_AUTH_SET, onAuthSet, nullptr);
+  (void)eventBusRegisterHandler(EVENT_SYSTEM_FACTORY_RESET, onFactoryResetEvent, nullptr);
 
   SettingsV5 loaded{};
   uint32_t loadedSeq = 0;

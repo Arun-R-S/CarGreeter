@@ -4,16 +4,17 @@
 #include <esp_err.h>
 #include <nvs_flash.h>
 
-#include "auth_manager.h"
-#include "config_manager.h"
-#include "event_bus.h"
-#include "jq6500_player.h"
-#include "logger.h"
-#include "network_manager.h"
-#include "scheduler.h"
-#include "system_manager.h"
-#include "time_manager.h"
-#include "web_server.h"
+#include "src/core/auth_manager.h"
+#include "src/core/event_bus.h"
+#include "src/core/logger.h"
+#include "src/core/network_manager.h"
+#include "src/core/system_manager.h"
+#include "src/core/time_manager.h"
+
+#include "src/app/config_manager.h"
+#include "src/app/jq6500_player.h"
+#include "src/app/scheduler.h"
+#include "src/app/web_server.h"
 
 namespace {
 

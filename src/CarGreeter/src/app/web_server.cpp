@@ -9,11 +9,11 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
-#include "auth_manager.h"
+#include "../core/auth_manager.h"
 #include "config_manager.h"
-#include "event_bus.h"
-#include "logger.h"
-#include "network_manager.h"
+#include "../core/event_bus.h"
+#include "../core/logger.h"
+#include "../core/network_manager.h"
 #include "web_pages.h"
 
 namespace {
