@@ -6,6 +6,7 @@
 
 #include "../core/event_bus.h"
 #include "../core/logger.h"
+#include "../core/system_manager.h"
 
 namespace {
 
@@ -69,5 +70,7 @@ void schedulerStartTask(UBaseType_t priority, uint32_t stackWords) {
   if (ok != pdPASS) {
     g_schedulerTask = nullptr;
     logError("SCHED", "Failed to start scheduler task");
+  } else {
+    systemManagerRegisterTask(g_schedulerTask, "scheduler");
   }
 }

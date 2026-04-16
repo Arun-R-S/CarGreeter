@@ -9,6 +9,7 @@
 
 #include "event_bus.h"
 #include "logger.h"
+#include "system_manager.h"
 
 namespace {
 
@@ -119,6 +120,8 @@ void timeManagerStartTask(UBaseType_t priority, uint32_t stackWords) {
   if (ok != pdPASS) {
     g_task = nullptr;
     logError("TIME", "Failed to start time task");
+  } else {
+    systemManagerRegisterTask(g_task, "time_mgr");
   }
 }
 

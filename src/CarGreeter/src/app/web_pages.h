@@ -557,7 +557,7 @@ static const char kSystemDetailsHtml[] PROGMEM = R"rawliteral(
     </div>
 
     <div class="section">
-      <h2>System</h2>
+      <h2>System Summary</h2>
       <div class="stat-row">
         <div class="stat-label">Uptime</div>
         <div>
@@ -566,8 +566,24 @@ static const char kSystemDetailsHtml[] PROGMEM = R"rawliteral(
         </div>
       </div>
       <div class="stat-row">
-        <div class="stat-label">Active Tasks</div>
+        <div class="stat-label">Total Active Tasks</div>
         <div class="stat-value" id="taskCount">-</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Active Tasks Detail</h2>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;margin-top:10px">
+          <thead>
+            <tr style="border-bottom:1px solid rgba(255,255,255,.1);text-align:left">
+              <th style="padding:8px;font-size:12px;color:var(--muted)">Task Name</th>
+              <th style="padding:8px;font-size:12px;color:var(--muted)">State</th>
+              <th style="padding:8px;font-size:12px;color:var(--muted)">Free Stack</th>
+            </tr>
+          </thead>
+          <tbody id="taskTable"></tbody>
+        </table>
       </div>
     </div>
 
@@ -579,6 +595,11 @@ static const char kSystemDetailsHtml[] PROGMEM = R"rawliteral(
   <script>
     const toKB = (bytes) => (bytes / 1024).toFixed(1) + ' KB';
     const toMB = (bytes) => (bytes / 1024 / 1024).toFixed(2) + ' MB';
+    
+    function getTaskState(s) {
+      const states = ['Running', 'Ready', 'Blocked', 'Suspended', 'Deleted'];
+      return states[s] || 'Unknown';
+    }
     
     function getSignalQuality(rssi) {
       if (rssi > -50) return '🟢 Excellent';
@@ -629,6 +650,21 @@ static const char kSystemDetailsHtml[] PROGMEM = R"rawliteral(
         document.getElementById('uptimeIso').textContent = d.system?.uptime || '-';
         document.getElementById('uptimeSec').textContent = (d.system?.uptimeSeconds || 0).toLocaleString() + ' seconds';
         document.getElementById('taskCount').textContent = (d.system?.taskCount || '-') + ' tasks';
+        
+        // Tasks Details
+        const tbody = document.getElementById('taskTable');
+        tbody.innerHTML = '';
+        (d.tasks || []).forEach(t => {
+          const row = document.createElement('tr');
+          row.style.borderBottom = '1px solid rgba(255,255,255,.05)';
+          const stackColor = t.stackMin < 512 ? 'status-error' : (t.stackMin < 1024 ? 'status-warn' : 'status-good');
+          row.innerHTML = `
+            <td style="padding:8px;font-size:13px">${t.name}</td>
+            <td style="padding:8px;font-size:13px;color:var(--muted)">${getTaskState(t.state)}</td>
+            <td style="padding:8px;font-size:13px" class="${stackColor}">${t.stackMin} bytes</td>
+          `;
+          tbody.appendChild(row);
+        });
         
         const now = new Date().toLocaleTimeString();
         document.getElementById('lastUpdate').textContent = now;
