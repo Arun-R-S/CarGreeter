@@ -6,8 +6,8 @@
 
 namespace {
 
-char g_username[20] = "admin";
-char g_password[20] = "1234";
+char g_username[33] = "admin";
+char g_password[65] = "1234";
 
 }
 
