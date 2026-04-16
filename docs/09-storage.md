@@ -245,6 +245,8 @@ wifiSsid=MyWiFi
 wifiPassword=MyPassword123
 apSsid=CarGreeter-AP
 apPassword=APPassword456
+adminUsername=admin
+adminPassword=1234
 ```
 
 ### Backup Download
@@ -264,7 +266,7 @@ apPassword=APPassword456
 
 ### Security Considerations
 
-* Backup file includes credentials (WiFi passwords, hotspot password)
+* Backup file includes credentials (WiFi passwords, hotspot password, admin credentials)
 * Store backup files securely
 * Only restore backups from trusted sources
 * Plain-text format allows manual editing before restore

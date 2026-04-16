@@ -66,6 +66,7 @@ JavaScript → API Calls
 * Audio volume and track selection
 * System controls and configuration
 * Backup/restore buttons
+* Admin credential configuration
 * Navigation links to other pages
 
 ---
@@ -157,6 +158,7 @@ JavaScript → API Calls
 | WiFi Config        | Connect to Network     | POST /api/wifi/connect |
 | WiFi Config        | Forget Network         | POST /api/wifi/forget |
 | Hotspot Config     | Set Hotspot Settings   | POST /api/hotspot     |
+| Admin Credentials  | Update Admin Password  | POST /api/auth        |
 | Audio Settings     | Configure Audio        | POST /api/audio       |
 | System Control     | Restart Device         | POST /api/restart     |
 | System Control     | Factory Reset          | POST /api/factory_reset |

@@ -52,6 +52,7 @@ Each module:
 
 * `/play` → EVENT_PLAY
 * `/setDelay` → EVENT_SET_DELAY
+* `/api/auth` → EVENT_AUTH_SET
 
 ---
 
@@ -81,6 +82,8 @@ Each module:
 ## Implementation
 
 * Uses Basic Authentication
+* Credentials loaded dynamically from Config Manager (SettingsV5)
+* Initial default: admin / 1234
 
 ---
 
@@ -196,6 +199,9 @@ delay = 5 seconds
 ## Input
 
 * EVENT_SET_DELAY
+* EVENT_AUTH_SET
+* EVENT_WIFI_SET
+* EVENT_HOTSPOT_SET
 
 ---
 

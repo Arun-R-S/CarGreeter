@@ -68,6 +68,7 @@ EVENT_PLAY → value = 0
 | ----------------- | ----- | ------------------------ |
 | EVENT_SET_DELAY   | 1     | Update playback delay    |
 | EVENT_VOLUME_CHANGE | 3   | Change audio volume      |
+| EVENT_AUTH_SET     | 15  | Update admin credentials |
 
 ---
 
@@ -116,7 +117,7 @@ Modules that **generate events**:
 
 | Module       | Events Produced                                           |
 | ------------ | --------------------------------------------------------- |
-| Web Server   | EVENT_PLAY, EVENT_SET_DELAY, EVENT_VOLUME_CHANGE, EVENT_AUDIO_SET_*, EVENT_WIFI_*, EVENT_HOTSPOT_SET, EVENT_SYSTEM_*, EVENT_TIME_SYNC |
+| Web Server   | EVENT_PLAY, EVENT_SET_DELAY, EVENT_VOLUME_CHANGE, EVENT_AUTH_SET, EVENT_AUDIO_SET_*, EVENT_WIFI_*, EVENT_HOTSPOT_SET, EVENT_SYSTEM_*, EVENT_TIME_SYNC |
 | Scheduler    | EVENT_PLAY                                                |
 | Network Manager | EVENT_WIFI_SET (on connection)                         |
 
@@ -129,7 +130,7 @@ Modules that **handle events**:
 | Module             | Events Consumed                                  |
 | ------------------ | ------------------------------------------------ |
 | JQ6500 Player      | EVENT_PLAY, EVENT_STOP, EVENT_VOLUME_CHANGE      |
-| Config Manager     | EVENT_SET_DELAY, EVENT_AUDIO_SET_*               |
+| Config Manager     | EVENT_SET_DELAY, EVENT_AUTH_SET, EVENT_AUDIO_SET_* |
 | WiFi/Network       | EVENT_WIFI_SET, EVENT_WIFI_FORGET, EVENT_WIFI_SCAN, EVENT_HOTSPOT_SET |
 | System            | EVENT_SYSTEM_RESTART, EVENT_SYSTEM_FACTORY_RESET |
 | Time Manager       | EVENT_TIME_SYNC, EVENT_TIME_SYNC_NTP             |
