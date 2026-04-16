@@ -10,6 +10,7 @@
 
 #include "event_bus.h"
 #include "logger.h"
+#include "system_manager.h"
 
 namespace {
 
@@ -120,7 +121,9 @@ void networkManagerStartTask(UBaseType_t priority, uint32_t stackWords) {
   const BaseType_t ok = xTaskCreate(taskFn, "net", stackWords, nullptr, priority, &g_task);
   if (ok != pdPASS) {
     g_task = nullptr;
-    logError("NET", "Failed to start task");
+    logError("WIFI", "Failed to start network task");
+  } else {
+    systemManagerRegisterTask(g_task, "network");
   }
 }
 

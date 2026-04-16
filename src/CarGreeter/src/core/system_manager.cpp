@@ -21,6 +21,10 @@ constexpr size_t kQueueLen = 8;
 QueueHandle_t g_queue = nullptr;
 TaskHandle_t g_task = nullptr;
 
+constexpr uint8_t kMaxRegisteredTasks = 16;
+RegisteredTask g_registeredTasks[kMaxRegisteredTasks] = {};
+uint8_t g_registeredCount = 0;
+
 void onRestart(const Event& event, void*) {
   if (g_queue == nullptr) {
     return;
@@ -72,6 +76,24 @@ void taskFn(void*) {
 
 }  // namespace
 
+void systemManagerRegisterTask(TaskHandle_t handle, const char* name) {
+  if (handle == nullptr || g_registeredCount >= kMaxRegisteredTasks) {
+    return;
+  }
+  g_registeredTasks[g_registeredCount].handle = handle;
+  snprintf(g_registeredTasks[g_registeredCount].name, sizeof(g_registeredTasks[g_registeredCount].name), "%s", name);
+  g_registeredCount++;
+}
+
+uint8_t systemManagerGetRegisteredTasks(RegisteredTask* outArray, uint8_t maxCount) {
+  if (outArray == nullptr || maxCount == 0) return 0;
+  uint8_t count = (g_registeredCount < maxCount) ? g_registeredCount : maxCount;
+  for (uint8_t i = 0; i < count; i++) {
+    outArray[i] = g_registeredTasks[i];
+  }
+  return count;
+}
+
 void systemManagerInit() {
   if (g_queue == nullptr) {
     g_queue = xQueueCreate(kQueueLen, sizeof(SystemCommand));
@@ -88,6 +110,8 @@ void systemManagerStartTask(UBaseType_t priority, uint32_t stackWords) {
   if (ok != pdPASS) {
     g_task = nullptr;
     logError("SYS", "Failed to start system task");
+  } else {
+    systemManagerRegisterTask(g_task, "system");
   }
 }
 

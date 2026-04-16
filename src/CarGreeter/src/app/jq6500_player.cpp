@@ -5,6 +5,7 @@
 
 #include "../core/event_bus.h"
 #include "../core/logger.h"
+#include "../core/system_manager.h"
 
 namespace {
 
@@ -160,6 +161,8 @@ void jq6500PlayerStartTask(UBaseType_t priority, uint32_t stackWords) {
   const BaseType_t ok = xTaskCreate(jqTask, "jq6500", stackWords, nullptr, priority, &g_task);
   if (ok != pdPASS) {
     g_task = nullptr;
-    logError("JQ6500", "Failed to start task");
+    logError("AUDIO", "Failed to start player task");
+  } else {
+    systemManagerRegisterTask(g_task, "audio_player");
   }
 }

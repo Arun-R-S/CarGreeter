@@ -4,6 +4,7 @@
 #include <freertos/queue.h>
 #include <freertos/task.h>
 
+#include "system_manager.h"
 #include "time_manager.h"
 
 namespace {
@@ -92,6 +93,8 @@ void loggerStartTask(UBaseType_t priority, uint32_t stackWords) {
   const BaseType_t ok = xTaskCreate(loggerTask, "logger", stackWords, nullptr, priority, &g_loggerTask);
   if (ok != pdPASS) {
     g_loggerTask = nullptr;
+  } else {
+    systemManagerRegisterTask(g_loggerTask, "logger");
   }
 }
 

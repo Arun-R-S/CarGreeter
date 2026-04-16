@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "logger.h"
+#include "system_manager.h"
 
 namespace {
 
@@ -73,6 +74,8 @@ void eventBusStartTask(UBaseType_t priority, uint32_t stackWords) {
   if (ok != pdPASS) {
     g_dispatchTask = nullptr;
     logError("EVENT", "Failed to start dispatch task");
+  } else {
+    systemManagerRegisterTask(g_dispatchTask, "event_bus");
   }
 }
 

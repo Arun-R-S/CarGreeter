@@ -14,6 +14,7 @@
 #include "../core/event_bus.h"
 #include "../core/logger.h"
 #include "../core/network_manager.h"
+#include "../core/system_manager.h"
 #include "web_pages.h"
 
 namespace {
@@ -408,7 +409,24 @@ void handleSystemInfo() {
   snprintf(subnetStr, sizeof(subnetStr), "%u.%u.%u.%u", subnet[0], subnet[1], subnet[2], subnet[3]);
 
   // === RUNTIME INFO ===
-  uint32_t taskCount = uxTaskGetNumberOfTasks();
+  uint32_t totalTaskCount = uxTaskGetNumberOfTasks();
+  
+  RegisteredTask regTasks[16];
+  uint8_t regCount = systemManagerGetRegisteredTasks(regTasks, 16);
+  
+  String tasksJson = "[";
+  for (uint8_t i = 0; i < regCount; i++) {
+    char tBuf[128];
+    const eTaskState state = eTaskGetState(regTasks[i].handle);
+    const uint32_t stackMin = uxTaskGetStackHighWaterMark(regTasks[i].handle);
+    
+    snprintf(tBuf, sizeof(tBuf),
+             "{\"name\":\"%s\",\"priority\":0,\"stackMin\":%u,\"state\":%d}",
+             regTasks[i].name, (unsigned)stackMin, (int)state);
+    tasksJson += tBuf;
+    if (i < regCount - 1) tasksJson += ",";
+  }
+  tasksJson += "]";
 
   // === BUILD COMPREHENSIVE JSON ===
   char json[3200];
@@ -449,7 +467,8 @@ void handleSystemInfo() {
            "\"uptimeSeconds\":%lu,"
            "\"taskCount\":%lu,"
            "\"bootCount\":0"
-           "}"
+           "},"
+           "\"tasks\":%s"
            "}",
            chipModel,
            static_cast<unsigned>(chipInfo.cores),
@@ -476,7 +495,8 @@ void handleSystemInfo() {
            static_cast<unsigned>(uptimeMinutes),
            static_cast<unsigned>(uptimeSeconds),
            static_cast<unsigned long>(uptime),
-           static_cast<unsigned long>(taskCount));
+           static_cast<unsigned long>(totalTaskCount),
+           tasksJson.c_str());
   
   g_server.send(200, "application/json", json);
 }
@@ -543,5 +563,7 @@ void webServerStartTask(UBaseType_t priority, uint32_t stackWords) {
   if (ok != pdPASS) {
     g_webTask = nullptr;
     logError("WEB", "Failed to start web task");
+  } else {
+    systemManagerRegisterTask(g_webTask, "web_server");
   }
 }

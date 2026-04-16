@@ -9,6 +9,7 @@
 
 #include "../core/event_bus.h"
 #include "../core/logger.h"
+#include "../core/system_manager.h"
 
 namespace {
 
@@ -673,6 +674,8 @@ void configManagerStartTask(UBaseType_t priority, uint32_t stackWords) {
   if (ok != pdPASS) {
     g_task = nullptr;
     logError("CONF", "Failed to start settings task");
+  } else {
+    systemManagerRegisterTask(g_task, "config_mgr");
   }
 }
 
