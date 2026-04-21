@@ -143,19 +143,50 @@ Playback triggered
 
 ---
 
-# ⏱ 4. GET `/setDelay`
+## Query Parameters
 
-## Description
-
-Sets the playback delay.
+| Param   | Type    | Description                                      |
+| ------- | ------- | ------------------------------------------------ |
+| `index` | integer | (Optional) Specific JQ6500 track index to play. |
 
 ---
 
-## Query Parameters
+## Example
 
-| Param   | Type    | Description      |
-| ------- | ------- | ---------------- |
-| `value` | integer | Delay in seconds |
+```text
+/play?index=5
+```
+
+---
+
+## Flow
+
+```text
+Request (index=5) → Event Bus → EVENT_PLAY (val=5) → JQ6500 Player (Direct Play)
+```
+
+---
+
+# 🔌 UART Configuration (ESP32-Cam → JQ6500)
+
+* TX (ESP32 GPIO 13) → RX (JQ6500)
+* RX (ESP32 GPIO 15) ← TX (JQ6500) (optional for track count detection)
+* GND must be common
+
+---
+
+# 🧠 Reliability & Timing
+
+To ensure the JQ6500 module operates reliably, the following logic is implemented:
+
+## 1. Startup Delay
+The audio task waits **500ms** after power-up before sending any UART commands. This ensures the JQ6500 internal processor is fully awake.
+
+## 2. Command Gap
+A **100ms delay** is enforced between a `setVolume` command and a `playTrack` command. This gives the JQ6500 enough time to process each command.
+
+## 3. Playback Loop Safety
+The volume is explicitly re-applied immediately before every playback command to ensure consistency even if the module reset or missed earlier syncs.
 
 ---
 

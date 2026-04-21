@@ -36,28 +36,50 @@ For a detailed overview and complete documentation map, see **[📘 Full Project
 
 ---
 
-## 📦 System Components
-
-* ESP32-C3 (WiFi-enabled microcontroller)
+* ESP32-C3 or ESP32-Cam
 * JQ6500 Voice Sound Module (16Mbit)
 * External speaker / AUX output
 * JQ6500 internal flash storage for the welcome track
 
 ---
 
+## 🔌 Hardware Wiring (ESP32-Cam)
+
+| ESP32-Cam Pin | JQ6500 Pin | Function |
+| :--- | :--- | :--- |
+| **5V** | **VCC** | Power (5V) |
+| **GND** | **GND** | Common Ground |
+| **GPIO 13** | **RX** | UART Control Signal |
+| **N/A** | **SPK+ / SPK-** | Direct Speaker Output (Onboard Amp) |
+| **N/A** | **ADL / ADR** | AUX / Line Out (Audio DAC L/R) |
+
+
+
+---
+
 ## 🌐 Web Interface
 
-Access the device using a browser:
+The system features a modern, responsive web dashboard (Tasmota-style) accessible via any browser at `http://<ESP32_IP>`.
 
-```text
-http://<ESP32_IP>
-```
+### Key Features:
 
-### Features:
-
-* Set playback delay
-* Trigger playback manually
-* View system logs
+*   **🔊 Audio Control:**
+    *   Set **Volume level** (0–30).
+    *   Configure **Playback Delay** (0–3600 seconds).
+    *   Select from **50 Preloaded tracks** or specify a **Custom Index**.
+    *   **Direct Play:** Instant preview button (▶) to test any track index without saving.
+    *   **Dynamic Title:** Displays the currently active track index in real-time.
+*   **📶 Network Management:**
+    *   **WiFi Scan & Connect:** Visual list of nearby networks with RSSI (signal) strength.
+    *   **Hotspot Control:** Change AP name and password.
+    *   **IP Monitoring:** View connection status and IP address in the header.
+*   **🔐 Security & Admin:**
+    *   Change **Admin credentials** for Basic Authentication.
+    *   **Backup & Restore:** Download your entire configuration as a text file and restore it to a new device instantly.
+*   **📊 Monitoring & Maintenance:**
+    *   **Live Logs:** Real-time log viewer for troubleshooting UART and Network events.
+    *   **Advanced SysInfo:** Detailed dashboard showing Heap memory, CPU task list, and Flash usage.
+    *   **Remote Actions:** Restart or Factory Reset the device via the UI.
 
 ---
 
@@ -72,68 +94,43 @@ Password: 1234
 
 ## 📁 Project Structure
 
+The project follows a clean, modular architecture separating generic core services from application-specific logic.
+
 ```text
 CarGreeter/
 │
-├── AGENT.md                 ← ⭐ PRIMARY FILE (entry point for agent)
-├── README.md                ← Human-friendly overview
+├── /src/CarGreeter
+│   ├── CarGreeter.ino        ← Main entry point
+│   └── /src
+│       ├── /app             ← Application Logic
+│       │   ├── config_manager  ← NVS settings & defaults
+│       │   ├── jq6500_player   ← Audio driver & timing safety
+│       │   ├── scheduler      ← Boot delay & playback triggers
+│       │   └── web_server     ← API endpoints & Web UI
+│       │
+│       ├── /core            ← Infrastructure (Reusable)
+│       │   ├── event_bus      ← Non-blocking message system
+│       │   ├── auth_manager   ← Basic Authentication
+│       │   ├── network_mgr    ← WiFi & AP management
+│       │   ├── system_mgr     ← Task & RAM monitoring
+│       │   └── logger        ← Circular log buffer
+│       │
+│       └── build_config.h    ← ⭐ HARDWARE & BRANDING DEFAULTS
 │
-├── /docs                    ← All detailed specifications
-│   │
-│   ├── 01-overview.md
-│   ├── 02-architecture.md
-│   ├── 03-modules.md
-│   ├── 04-event-system.md
-│   ├── 05-web-ui.md
-│   ├── 06-authentication.md
-│   ├── 07-audio-system.md
-│   ├── 08-logging.md
-│   ├── 09-storage.md
-│   ├── 10-scheduler.md
-│   ├── 11-api-spec.md
-│   ├── 12-non-functional.md
-│   ├── 13-future-enhancements.md
-│   ├── 14-build-deployment.md
-│
-├── /src                     ← Arduino source files
-│   │
-│   ├── CarGreeter.ino
-│   │
-│   ├── web_server.cpp
-│   ├── web_server.h
-│   │
-│   ├── web_pages.h          ← Embedded UI (Tasmota-style)
-│   │
-│   ├── auth_manager.cpp
-│   ├── auth_manager.h
-│   │
-│   ├── event_bus.cpp
-│   ├── event_bus.h
-│   │
-│   ├── jq6500_player.cpp
-│   ├── jq6500_player.h
-│   │
-│   ├── config_manager.cpp
-│   ├── config_manager.h
-│   │
-│   ├── scheduler.cpp
-│   ├── scheduler.h
-│   │
-│   ├── logger.cpp
-│   ├── logger.h
-│
-└── .gitignore
+├── /docs                    ← Detailed design specs
+└── AGENT.md                 ← AI Agent instructions
 ```
 
 ---
 
-## ⚙️ How It Works
+## ⚙️ How It Works (Event Flow)
 
-1. Power ON the device
-2. System initializes modules
-3. Delay timer starts
-4. Audio plays once after delay
-5. System remains ready for user interaction
+1.  **⚡ Power On:** The system initializes the `Event Bus` and `Logger` immediately.
+2.  **💾 Config Load:** `Config Manager` loads saved volume and delay from NVS. If empty, it uses `build_config.h` defaults.
+3.  **🔊 Audio Prep:** `JQ6500 Player` starts and waits **500ms** for the hardware to stabilize, then syncs the volume.
+4.  **⏱️ Greeting Delay:** The `Scheduler` waits for the configured delay (e.g., 5s). This allows the car's engine to start and electronics to stabilize.
+5.  **🎶 Playback:** After the delay, `Scheduler` sends `EVENT_PLAY`. The Player receives this, re-syncs volume, waits **100ms**, and triggers the JQ6500.
+6.  **🌐 Ready Mode:** The Web Server remains active, allowing you to change settings, view logs, or play tracks manually via the UI.
 
 ---
 
@@ -171,16 +168,6 @@ Detailed documentation is available in `/docs`:
 
 * Use only on trusted local networks
 * Audio is stored/decoded on the JQ6500 module (ESP32-C3 only controls playback)
-
----
-
-## 🚀 Future Enhancements
-
-* Multiple audio files
-* Volume control
-* OTA updates
-* Bluetooth audio
-* Advanced scheduling
 
 ---
 
