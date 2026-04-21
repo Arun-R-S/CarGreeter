@@ -94,68 +94,43 @@ Password: 1234
 
 ## 📁 Project Structure
 
+The project follows a clean, modular architecture separating generic core services from application-specific logic.
+
 ```text
 CarGreeter/
 │
-├── AGENT.md                 ← ⭐ PRIMARY FILE (entry point for agent)
-├── README.md                ← Human-friendly overview
+├── /src/CarGreeter
+│   ├── CarGreeter.ino        ← Main entry point
+│   └── /src
+│       ├── /app             ← Application Logic
+│       │   ├── config_manager  ← NVS settings & defaults
+│       │   ├── jq6500_player   ← Audio driver & timing safety
+│       │   ├── scheduler      ← Boot delay & playback triggers
+│       │   └── web_server     ← API endpoints & Web UI
+│       │
+│       ├── /core            ← Infrastructure (Reusable)
+│       │   ├── event_bus      ← Non-blocking message system
+│       │   ├── auth_manager   ← Basic Authentication
+│       │   ├── network_mgr    ← WiFi & AP management
+│       │   ├── system_mgr     ← Task & RAM monitoring
+│       │   └── logger        ← Circular log buffer
+│       │
+│       └── build_config.h    ← ⭐ HARDWARE & BRANDING DEFAULTS
 │
-├── /docs                    ← All detailed specifications
-│   │
-│   ├── 01-overview.md
-│   ├── 02-architecture.md
-│   ├── 03-modules.md
-│   ├── 04-event-system.md
-│   ├── 05-web-ui.md
-│   ├── 06-authentication.md
-│   ├── 07-audio-system.md
-│   ├── 08-logging.md
-│   ├── 09-storage.md
-│   ├── 10-scheduler.md
-│   ├── 11-api-spec.md
-│   ├── 12-non-functional.md
-│   ├── 13-future-enhancements.md
-│   ├── 14-build-deployment.md
-│
-├── /src                     ← Arduino source files
-│   │
-│   ├── CarGreeter.ino
-│   │
-│   ├── web_server.cpp
-│   ├── web_server.h
-│   │
-│   ├── web_pages.h          ← Embedded UI (Tasmota-style)
-│   │
-│   ├── auth_manager.cpp
-│   ├── auth_manager.h
-│   │
-│   ├── event_bus.cpp
-│   ├── event_bus.h
-│   │
-│   ├── jq6500_player.cpp
-│   ├── jq6500_player.h
-│   │
-│   ├── config_manager.cpp
-│   ├── config_manager.h
-│   │
-│   ├── scheduler.cpp
-│   ├── scheduler.h
-│   │
-│   ├── logger.cpp
-│   ├── logger.h
-│
-└── .gitignore
+├── /docs                    ← Detailed design specs
+└── AGENT.md                 ← AI Agent instructions
 ```
 
 ---
 
-## ⚙️ How It Works
+## ⚙️ How It Works (Event Flow)
 
-1. Power ON the device
-2. System initializes modules
-3. Delay timer starts
-4. Audio plays once after delay
-5. System remains ready for user interaction
+1.  **⚡ Power On:** The system initializes the `Event Bus` and `Logger` immediately.
+2.  **💾 Config Load:** `Config Manager` loads saved volume and delay from NVS. If empty, it uses `build_config.h` defaults.
+3.  **🔊 Audio Prep:** `JQ6500 Player` starts and waits **500ms** for the hardware to stabilize, then syncs the volume.
+4.  **⏱️ Greeting Delay:** The `Scheduler` waits for the configured delay (e.g., 5s). This allows the car's engine to start and electronics to stabilize.
+5.  **🎶 Playback:** After the delay, `Scheduler` sends `EVENT_PLAY`. The Player receives this, re-syncs volume, waits **100ms**, and triggers the JQ6500.
+6.  **🌐 Ready Mode:** The Web Server remains active, allowing you to change settings, view logs, or play tracks manually via the UI.
 
 ---
 
