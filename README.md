@@ -47,9 +47,12 @@ For a detailed overview and complete documentation map, see **[📘 Full Project
 
 | ESP32-Cam Pin | JQ6500 Pin | Function |
 | :--- | :--- | :--- |
-| **5V** | **VCC** | Power (5V recommended) |
+| **5V** | **VCC** | Power (5V) |
 | **GND** | **GND** | Common Ground |
 | **GPIO 13** | **RX** | UART Control Signal |
+| **N/A** | **SPK+ / SPK-** | Direct Speaker Output (Onboard Amp) |
+| **N/A** | **ADL / ADR** | AUX / Line Out (Audio DAC L/R) |
+
 
 
 ---
