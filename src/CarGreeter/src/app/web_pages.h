@@ -87,7 +87,7 @@ static const char kIndexHtml[] PROGMEM = R"rawliteral(
   <main>
     <div class="grid">
       <section class="card">
-        <div class="title"><h2>Playback</h2><span class="muted">JQ6500 indexed tracks</span></div>
+        <div class="title"><h2>Playback</h2><span class="muted" id="playingIdx">JQ6500 indexed tracks</span></div>
         <div class="row">
           <button class="success" onclick="apiGet('/play')">Play now</button>
           <button class="warning" onclick="refresh()">Refresh</button>
@@ -95,17 +95,61 @@ static const char kIndexHtml[] PROGMEM = R"rawliteral(
         <div class="two" style="margin-top:10px">
           <div>
             <label>Preloaded welcome track</label>
-            <select id="preloaded">
-              <option value="1">1 - Tata.mp3</option>
-              <option value="2">2 - Mahindra.mp3</option>
-              <option value="3">3 - Toyota.mp3</option>
-              <option value="4">4 - ToyotaInnova.mp3</option>
-              <option value="5">5 - Hyundai.mp3</option>
-              <option value="6">6 - HyundaiAirlines.mp3</option>
-              <option value="7">7 - InnovaAirlines.mp3</option>
-              <option value="8">8 - Chevrolet.mp3</option>
-              <option value="9">9 - ChevroletSpark.mp3</option>
+            <div style="display:flex;gap:8px;align-items:center">
+              <select id="preloaded" style="flex:1">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10</option>
+              <option value="11">11</option>
+              <option value="12">12</option>
+              <option value="13">13</option>
+              <option value="14">14</option>
+              <option value="15">15</option>
+              <option value="16">16</option>
+              <option value="17">17</option>
+              <option value="18">18</option>
+              <option value="19">19</option>
+              <option value="20">20</option>
+              <option value="21">21</option>
+              <option value="22">22</option>
+              <option value="23">23</option>
+              <option value="24">24</option>
+              <option value="25">25</option>
+              <option value="26">26</option>
+              <option value="27">27</option>
+              <option value="28">28</option>
+              <option value="29">29</option>
+              <option value="30">30</option>
+              <option value="31">31</option>
+              <option value="32">32</option>
+              <option value="33">33</option>
+              <option value="34">34</option>
+              <option value="35">35</option>
+              <option value="36">36</option>
+              <option value="37">37</option>
+              <option value="38">38</option>
+              <option value="39">39</option>
+              <option value="40">40</option>
+              <option value="41">41</option>
+              <option value="42">42</option>
+              <option value="43">43</option>
+              <option value="44">44</option>
+              <option value="45">45</option>
+              <option value="46">46</option>
+              <option value="47">47</option>
+              <option value="48">48</option>
+              <option value="49">49</option>
+              <option value="50">50</option>
             </select>
+            <button class="info" style="padding:6px 14px;flex-shrink:0" title="Play selected track now" onclick="playSelectedTrack()">▶</button>
+            </div>
           </div>
           <div>
             <label>Custom track index (0 disables)</label>
@@ -223,6 +267,10 @@ static const char kIndexHtml[] PROGMEM = R"rawliteral(
   <script>
     function toast(msg){ alert(msg); }
     async function apiGet(url){ const t = await fetch(url).then(r=>r.text()); toast(t); }
+    async function playSelectedTrack(){
+      const idx = document.getElementById('preloaded').value;
+      toast(await fetch('/play?index=' + encodeURIComponent(idx)).then(r=>r.text()));
+    }
     async function apiPost(url, body){
       const r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body});
       const t = await r.text();
@@ -243,6 +291,7 @@ static const char kIndexHtml[] PROGMEM = R"rawliteral(
       document.getElementById('adminUser').value = s.adminUsername || 'admin';
       document.getElementById('netMode').textContent = 'Mode: ' + (s.mode || '…');
       document.getElementById('netIp').textContent = 'IP: ' + (s.ip || '…');
+      document.getElementById('playingIdx').textContent = 'Current Saved: ' + s.effectiveIndex;
       document.getElementById('audioHint').textContent = 'Effective track: ' + s.effectiveIndex;
       const st = s.connected ? ('Connected to ' + (s.connectedSsid||'') + ' (' + s.rssi + ' dBm)') : 'Not connected';
       document.getElementById('wifiStatus').textContent = 'Status: ' + st;

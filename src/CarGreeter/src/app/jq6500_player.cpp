@@ -14,6 +14,7 @@ HardwareSerial* g_serial = &Serial2;
 Jq6500Config g_cfg{.txPin = -1, .rxPin = -1, .baudRate = 9600, .welcomeTrackIndex = 1, .volume = 20};
 
 volatile bool g_playRequested = false;
+volatile uint16_t g_immediateTrackIdx = 0;
 volatile uint16_t g_preloadedTrackIndex = 1;
 volatile uint16_t g_customTrackIndex = 0;
 volatile uint8_t g_volume = 20;
@@ -62,7 +63,12 @@ void setVolume(uint8_t volume) {
 
 void playTrack(uint16_t index) { send2(0x03, index); }
 
-void onPlay(const Event&, void*) { g_playRequested = true; }
+void onPlay(const Event& event, void*) {
+  if (event.value > 0 && event.value <= 9999) {
+    g_immediateTrackIdx = static_cast<uint16_t>(event.value);
+  }
+  g_playRequested = true;
+}
 
 void onSetPreloaded(const Event& event, void*) {
   int32_t v = event.value;
@@ -98,6 +104,9 @@ void onVolume(const Event& event, void*) {
 }
 
 void jqTask(void*) {
+  // Give the JQ6500 module time to power up and stabilize before sending commands.
+  vTaskDelay(pdMS_TO_TICKS(500));
+
   setDeviceFlash();
   setVolume(static_cast<uint8_t>(g_cfg.volume));
   logInfo("JQ6500", "Ready");
@@ -110,7 +119,18 @@ void jqTask(void*) {
     g_playRequested = false;
 
     logInfo("JQ6500", "Play requested");
-    const uint16_t idx = (g_customTrackIndex != 0) ? g_customTrackIndex : g_preloadedTrackIndex;
+    uint16_t idx = 0;
+    if (g_immediateTrackIdx != 0) {
+      idx = g_immediateTrackIdx;
+      g_immediateTrackIdx = 0;
+    } else {
+      idx = (g_customTrackIndex != 0) ? g_customTrackIndex : g_preloadedTrackIndex;
+    }
+    
+    // Safety: Always re-set volume before playing. 
+    // We add a tiny delay (50ms) to allow the JQ6500 to process the volume change before playing.
+    setVolume(static_cast<uint8_t>(g_volume));
+    vTaskDelay(pdMS_TO_TICKS(100)); 
     playTrack(idx);
   }
 }

@@ -41,9 +41,20 @@ void handlePlay() {
   if (!authManagerEnsure(g_server)) {
     return;
   }
-  (void)eventBusSend(EVENT_PLAY, 0);
-  g_server.send(200, "text/plain", "Playback triggered");
-  logInfo("WEB", "EVENT_PLAY sent");
+  int32_t index = 0;
+  if (g_server.hasArg("index")) {
+    index = g_server.arg("index").toInt();
+  }
+  (void)eventBusSend(EVENT_PLAY, index);
+
+  char msg[64];
+  if (index > 0) {
+    snprintf(msg, sizeof(msg), "Direct play: Track %d", (int)index);
+  } else {
+    snprintf(msg, sizeof(msg), "Playback triggered");
+  }
+  g_server.send(200, "text/plain", msg);
+  logInfo("WEB", msg);
 }
 
 void handleSetDelay() {
