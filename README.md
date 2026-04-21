@@ -51,8 +51,6 @@ For a detailed overview and complete documentation map, see **[📘 Full Project
 | **GND** | **GND** | Common Ground |
 | **GPIO 13** | **RX** | UART Control Signal |
 
-> [!TIP]
-> **RX Connection:** Connect JQ6500 TX to ESP32 RX if you want to enable dynamic track count detection in the UI (requires `rxPin` configuration).
 
 ---
 
