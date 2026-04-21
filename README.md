@@ -36,12 +36,23 @@ For a detailed overview and complete documentation map, see **[📘 Full Project
 
 ---
 
-## 📦 System Components
-
-* ESP32-C3 (WiFi-enabled microcontroller)
+* ESP32-C3 or ESP32-Cam
 * JQ6500 Voice Sound Module (16Mbit)
 * External speaker / AUX output
 * JQ6500 internal flash storage for the welcome track
+
+---
+
+## 🔌 Hardware Wiring (ESP32-Cam)
+
+| ESP32-Cam Pin | JQ6500 Pin | Function |
+| :--- | :--- | :--- |
+| **5V** | **VCC** | Power (5V recommended) |
+| **GND** | **GND** | Common Ground |
+| **GPIO 13** | **RX** | UART Control Signal |
+
+> [!TIP]
+> **RX Connection:** Connect JQ6500 TX to ESP32 RX if you want to enable dynamic track count detection in the UI (requires `rxPin` configuration).
 
 ---
 
