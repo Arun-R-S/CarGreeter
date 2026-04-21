@@ -59,17 +59,27 @@ For a detailed overview and complete documentation map, see **[📘 Full Project
 
 ## 🌐 Web Interface
 
-Access the device using a browser:
+The system features a modern, responsive web dashboard (Tasmota-style) accessible via any browser at `http://<ESP32_IP>`.
 
-```text
-http://<ESP32_IP>
-```
+### Key Features:
 
-### Features:
-
-* Set playback delay
-* Trigger playback manually
-* View system logs
+*   **🔊 Audio Control:**
+    *   Set **Volume level** (0–30).
+    *   Configure **Playback Delay** (0–3600 seconds).
+    *   Select from **50 Preloaded tracks** or specify a **Custom Index**.
+    *   **Direct Play:** Instant preview button (▶) to test any track index without saving.
+    *   **Dynamic Title:** Displays the currently active track index in real-time.
+*   **📶 Network Management:**
+    *   **WiFi Scan & Connect:** Visual list of nearby networks with RSSI (signal) strength.
+    *   **Hotspot Control:** Change AP name and password.
+    *   **IP Monitoring:** View connection status and IP address in the header.
+*   **🔐 Security & Admin:**
+    *   Change **Admin credentials** for Basic Authentication.
+    *   **Backup & Restore:** Download your entire configuration as a text file and restore it to a new device instantly.
+*   **📊 Monitoring & Maintenance:**
+    *   **Live Logs:** Real-time log viewer for troubleshooting UART and Network events.
+    *   **Advanced SysInfo:** Detailed dashboard showing Heap memory, CPU task list, and Flash usage.
+    *   **Remote Actions:** Restart or Factory Reset the device via the UI.
 
 ---
 
