@@ -171,16 +171,6 @@ Detailed documentation is available in `/docs`:
 
 ---
 
-## 🚀 Future Enhancements
-
-* Multiple audio files
-* Volume control
-* OTA updates
-* Bluetooth audio
-* Advanced scheduling
-
----
-
 ## 🤝 Contribution
 
 * Follow modular architecture
